@@ -1,18 +1,11 @@
 package ubb.inothershoes;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication
 public class App {
     public static void main(String[] args) {
-        String dbUrl = System.getenv("DB_URL");
-        String dbUser = System.getenv("DB_USER");
-        String dbPass = System.getenv("DB_PASS");
-
-        try (Connection conn = DriverManager.getConnection(dbUrl, dbUser, dbPass)) {
-            Thread.currentThread().join();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        SpringApplication.run(App.class, args);
     }
 }

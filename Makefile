@@ -20,6 +20,14 @@ $(MVN_BIN):
 .PHONY: get-maven
 get-maven: $(MVN_BIN)
 
+.PHONY: generate
+generate: $(MVN_BIN)
+	$(MVN_BIN) -f $(BACKEND_POM) clean generate-sources
+
+.PHONY: compile
+compile: $(MVN_BIN)
+	$(MVN_BIN) -f $(BACKEND_POM) clean compile
+
 .PHONY: build
 build: $(MVN_BIN)
 	$(MVN_BIN) -f $(BACKEND_POM) clean package

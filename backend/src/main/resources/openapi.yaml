@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info: 
+  title: Life Swap
+  version: 1.0.0
+  description: API for Life Swap
+servers: 
+  - url: http://localhost:8080
+paths:
+  /api/v1/health:
+    get:
+      operationId: health
+      summary: checks if the server is healthy
+      responses:
+        "200":
+          description: the server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+        "500":
+          description: the server is not healthy
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/ErrorResponse"

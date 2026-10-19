@@ -1,1 +1,6 @@
+ubb/inothershoes/api/ApiUtil.class
+ubb/inothershoes/controller/HealthController.class
+ubb/inothershoes/api/DefaultApi.class
+ubb/inothershoes/model/Health500Response.class
+ubb/inothershoes/model/Health200Response.class
 ubb/inothershoes/App.class
