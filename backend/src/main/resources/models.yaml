@@ -1,0 +1,12 @@
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: int
+        message:
+          type: string
+      required:
+        - errorCode
+        - message
