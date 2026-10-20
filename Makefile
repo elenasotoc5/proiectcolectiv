@@ -1,3 +1,6 @@
+-include .env
+export
+
 MAVEN_VERSION = 3.10.0
 MAVEN_URL = https://archive.apache.org/dist/maven/maven-3/$(MAVEN_VERSION)/binaries/apache-maven-$(MAVEN_VERSION)-bin.tar.gz
 
@@ -37,3 +40,18 @@ build: $(MVN_BIN)
 .PHONY: run
 run: build
 	$(MVN_BIN) -f $(BACKEND_POM) exec:java -Dexec.mainClass="$(MAIN_CLASS)"
+
+.PHONY: migrate
+migrate: $(MVN_BIN)
+	$(MVN_BIN) -f $(BACKEND_POM) flyway:migrate \
+		-Dflyway.url=jdbc:postgresql://localhost:$(DB_PORT)/$(DB_NAME) \
+		-Dflyway.user=$(DB_USER) \
+		-Dflyway.password=$(DB_PASS)
+
+.PHONY: up
+up:
+	docker compose up -d --build
+
+.PHONY: down
+down:
+	docker compose down -v
