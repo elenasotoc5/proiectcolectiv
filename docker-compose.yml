@@ -43,12 +43,28 @@ services:
       DB_PASS: ${DB_PASS}
     networks:
       - backend-network
+      - frontend-network
     depends_on:
       flyway:
         condition: service_completed_successfully
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    container_name: frontend_app
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    networks:
+      - frontend-network
+    depends_on:
+      - backend
+
 networks:
   backend-network:
+    driver: bridge
+  frontend-network:
     driver: bridge
 
 volumes:
