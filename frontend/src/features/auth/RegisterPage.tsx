@@ -38,27 +38,27 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
     };
 
     const validateForm = (): boolean => {
-        // Validare FE: câmpuri obligatorii fără whitespace
+        // FE validation: non-empty required fields
         if (
             !formData.name.trim() ||
             !formData.email.trim() ||
             !formData.password ||
             !formData.confirmPassword
         ) {
-            setErrorMessage("Toate câmpurile sunt obligatorii.");
+            setErrorMessage("All fields are required.");
             return false;
         }
 
-        // Validare FE: format email valid
+        // FE validation: valid email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email.trim())) {
-            setErrorMessage("Te rugăm să introduci o adresă de email validă.");
+            setErrorMessage("Please enter a valid email address.");
             return false;
         }
 
-        // Validare FE: confirmare parolă
+        // FE validation: password confirmation check
         if (formData.password !== formData.confirmPassword) {
-            setErrorMessage("Parolele nu coincid.");
+            setErrorMessage("Passwords do not match.");
             return false;
         }
 
@@ -77,7 +77,7 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
         setIsLoading(true);
 
         try {
-            // Conectare la endpoint-ul de înregistrare al backend-ului
+            // Connect to registration API
             const response = await fetch("http://localhost:8080/api/v1/auth/register", {
                 method: "POST",
                 headers: {
@@ -93,17 +93,15 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
             const data = await response.json().catch(() => null);
 
             if (!response.ok) {
-                // Afișează eroarea returnată de API (dacă există) sau un mesaj generic
                 const apiError =
                     data?.message ||
                     data?.error ||
-                    "Înregistrarea a eșuat. Verifică datele introduse.";
+                    "Registration failed. Please check your details.";
                 setErrorMessage(apiError);
                 return;
             }
 
-            // Mesaj de succes
-            setSuccessMessage("Contul a fost creat cu succes! Te poți autentifica.");
+            setSuccessMessage("Account created successfully! You can now log in.");
             setFormData({
                 name: "",
                 email: "",
@@ -111,9 +109,8 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                 confirmPassword: "",
             });
         } catch {
-            // Tratare eroare de conexiune la server
             setErrorMessage(
-                "Nu s-a putut realiza conexiunea cu serverul. Asigură-te că backend-ul rulează."
+                "Unable to connect to the server. Please make sure the backend is running."
             );
         } finally {
             setIsLoading(false);
@@ -137,7 +134,7 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                         onClick={onNavigateBack}
                         className="gap-2"
                     >
-                        <ArrowLeft className="size-4" /> Înapoi
+                        <ArrowLeft className="size-4" /> Back
                     </Button>
                 </div>
             </header>
@@ -146,16 +143,15 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                 <Card className="w-full max-w-md shadow-md">
                     <CardHeader className="text-center">
                         <CardTitle className="text-2xl font-bold">
-                            Creează un cont nou
+                            Create an account
                         </CardTitle>
                         <CardDescription>
-                            Alătură-te comunității LifeSwap și începe schimbul de locuințe
+                            Join the LifeSwap community and start exchanging homes
                         </CardDescription>
                     </CardHeader>
 
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4">
-                            {/* Mesaj de eroare dinamic (FE sau API) */}
                             {errorMessage && (
                                 <div className="flex items-center gap-2 rounded-md bg-destructive/15 p-3 text-sm font-medium text-destructive">
                                     <AlertCircle className="size-4 shrink-0" />
@@ -163,7 +159,6 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                                 </div>
                             )}
 
-                            {/* Mesaj de succes dinamic */}
                             {successMessage && (
                                 <div className="flex items-center gap-2 rounded-md bg-emerald-500/15 p-3 text-sm font-medium text-emerald-600 dark:text-emerald-400">
                                     <CheckCircle2 className="size-4 shrink-0" />
@@ -172,12 +167,12 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                             )}
 
                             <div className="space-y-2">
-                                <Label htmlFor="name">Nume complet</Label>
+                                <Label htmlFor="name">Full Name</Label>
                                 <Input
                                     id="name"
                                     name="name"
                                     type="text"
-                                    placeholder="ex: Ioana Popescu"
+                                    placeholder="e.g. Jane Doe"
                                     value={formData.name}
                                     onChange={handleChange}
                                     disabled={isLoading}
@@ -190,7 +185,7 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                                     id="email"
                                     name="email"
                                     type="email"
-                                    placeholder="nume@exemplu.com"
+                                    placeholder="name@example.com"
                                     value={formData.email}
                                     onChange={handleChange}
                                     disabled={isLoading}
@@ -198,7 +193,7 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="password">Parolă</Label>
+                                <Label htmlFor="password">Password</Label>
                                 <Input
                                     id="password"
                                     name="password"
@@ -211,7 +206,7 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirmă Parola</Label>
+                                <Label htmlFor="confirmPassword">Confirm Password</Label>
                                 <Input
                                     id="confirmPassword"
                                     name="confirmPassword"
@@ -229,20 +224,20 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                                 {isLoading ? (
                                     <>
                                         <Loader2 className="mr-2 size-4 animate-spin" />
-                                        Se procesează...
+                                        Creating account...
                                     </>
                                 ) : (
-                                    "Înregistrează-te"
+                                    "Sign Up"
                                 )}
                             </Button>
                             <p className="text-xs text-muted-foreground text-center">
-                                Ai deja un cont?{" "}
+                                Already have an account?{" "}
                                 <button
                                     type="button"
                                     onClick={onNavigateBack}
                                     className="text-primary hover:underline font-semibold"
                                 >
-                                    Autentifică-te
+                                    Sign in
                                 </button>
                             </p>
                         </CardFooter>
