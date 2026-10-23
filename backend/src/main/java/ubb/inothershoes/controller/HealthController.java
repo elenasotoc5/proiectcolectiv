@@ -2,15 +2,15 @@ package ubb.inothershoes.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
-import ubb.inothershoes.api.DefaultApi;
-import ubb.inothershoes.model.Health200Response;
+import ubb.inothershoes.api.HealthApi;
+import ubb.inothershoes.model.HealthResponse;
 
 @RestController
-public class HealthController implements DefaultApi {
+public class HealthController implements HealthApi {
 
     @Override
-    public ResponseEntity<Health200Response> health() {
-        Health200Response response = new Health200Response();
+    public ResponseEntity<HealthResponse> health() {
+        HealthResponse response = new HealthResponse();
         response.setStatus("UP");
         return ResponseEntity.ok(response);
     }
