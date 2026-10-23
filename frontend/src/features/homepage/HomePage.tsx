@@ -7,8 +7,7 @@ import {
     CardContent,
 } from "@/components/ui/card";
 
-export default function HomePage() {
-    return (
+export default function HomePage({ onGetStarted }: { onGetStarted: () => void }) {    return (
         <main className="min-h-screen bg-background text-foreground">
             <header className="border-b border-border">
                 <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 py-5">
@@ -35,7 +34,7 @@ export default function HomePage() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
-                    <Button className="pointer-events-none">
+                    <Button onClick={onGetStarted}>
                         Get Started <ArrowRight />
                     </Button>
                     <Button variant="outline" className="pointer-events-none">
