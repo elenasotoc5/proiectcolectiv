@@ -1,8 +1,8 @@
 package ubb.inothershoes.repository;
 
-import ubb.inothershoes.entity.UserEntity;
+import ubb.inothershoes.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends JpaRepository<UserEntity, Long> {
+public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 }

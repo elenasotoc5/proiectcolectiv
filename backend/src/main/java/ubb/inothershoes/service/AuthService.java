@@ -1,12 +1,14 @@
 package ubb.inothershoes.service;
 
-import ubb.inothershoes.entity.UserEntity;
+import ubb.inothershoes.entity.User;
 import ubb.inothershoes.repository.UserRepository;
 import ubb.inothershoes.model.RegisterRequest;
 import ubb.inothershoes.model.UserResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -20,6 +22,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Transactional
     public UserResponse register(RegisterRequest request) {
         String normalizedEmail = request.getEmail().toLowerCase().trim();
 
@@ -27,26 +30,25 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
         }
 
-        UserEntity user = new UserEntity();
+        User user = new User();
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFirstName(request.getFirstName().trim());
+        user.setLastName(request.getLastName().trim());
 
-        if (request.getName() != null && !request.getName().isBlank()) {
-            String[] parts = request.getName().trim().split("\\s+", 2);
-            user.setFirstName(parts[0]);
-            if (parts.length > 1) {
-                user.setLastName(parts[1]);
-            }
+        User saved;
+        try {
+            saved = userRepository.saveAndFlush(user);
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
         }
 
-        UserEntity savedUser = userRepository.save(user);
-
         UserResponse response = new UserResponse();
-        response.setId(savedUser.getId());
-        response.setName(request.getName());
-        response.setEmail(savedUser.getEmail());
-        response.setCreatedAt(savedUser.getCreatedAt());
-
+        response.setId(saved.getId());
+        response.setFirstName(saved.getFirstName());
+        response.setLastName(saved.getLastName());
+        response.setEmail(saved.getEmail());
+        response.setCreatedAt(saved.getCreatedAt());
         return response;
     }
 }

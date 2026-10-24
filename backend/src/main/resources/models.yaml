@@ -1,12 +1,72 @@
 components:
   schemas:
-    ErrorResponse:
+    HealthResponse:
       type: object
       properties:
-        errorCode:
-          type: int
-        message:
+        status:
           type: string
+          example: "UP"
+
+    RegisterRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+        - email
+        - password
+      properties:
+        firstName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "John"
+        lastName:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          example: "john.doe@example.com"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72
+          example: "SecretPassword123!"
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          example: "john.doe@example.com"
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
       required:
         - errorCode
         - message
+      properties:
+        errorCode:
+          type: integer
+          format: int32
+          example: 400
+        message:
+          type: string
+          example: "Email is already registered"
