@@ -7,7 +7,11 @@ import {
     CardContent,
 } from "@/components/ui/card";
 
-export default function HomePage() {
+interface HomePageProps {
+    onGetStartedClick?: () => void;
+}
+
+export default function HomePage({ onGetStartedClick }: HomePageProps) {
     return (
         <main className="min-h-screen bg-background text-foreground">
             <header className="border-b border-border">
@@ -35,7 +39,7 @@ export default function HomePage() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap justify-center gap-3">
-                    <Button className="pointer-events-none">
+                    <Button onClick={onGetStartedClick}>
                         Get Started <ArrowRight />
                     </Button>
                     <Button variant="outline" className="pointer-events-none">
