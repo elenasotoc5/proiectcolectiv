@@ -17,9 +17,10 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 interface RegisterPageProps {
     onNavigateBack: () => void;
+    onNavigateToLogin: () => void;
 }
 
-export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
+export default function RegisterPage({ onNavigateBack, onNavigateToLogin }: RegisterPageProps) {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -259,7 +260,7 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                                 Already have an account?{" "}
                                 <button
                                     type="button"
-                                    onClick={onNavigateBack}
+                                    onClick={onNavigateToLogin}
                                     className="text-primary hover:underline font-semibold"
                                 >
                                     Sign in

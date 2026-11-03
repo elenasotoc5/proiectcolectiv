@@ -9,15 +9,25 @@ import {
 
 interface HomePageProps {
     onGetStartedClick?: () => void;
+    onSignInClick?: () => void;
 }
 
-export default function HomePage({ onGetStartedClick }: HomePageProps) {
+export default function HomePage({ onGetStartedClick, onSignInClick }: HomePageProps) {
     return (
         <main className="min-h-screen bg-background text-foreground">
             <header className="border-b border-border">
-                <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 py-5">
-                    <House className="size-6 text-primary" />
-                    <span className="text-xl font-bold">LifeSwap</span>
+                <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+                    <div className="flex items-center gap-2">
+                        <House className="size-6 text-primary" />
+                        <span className="text-xl font-bold">LifeSwap</span>
+                    </div>
+                    <Button 
+                        variant="outline" 
+                        onClick={onSignInClick}
+                        className="border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold"
+                    >
+                        Sign In
+                    </Button>
                 </div>
             </header>
 
