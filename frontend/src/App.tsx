@@ -21,7 +21,7 @@ function App() {
                 onNavigateBack={() => setCurrentView("home")} 
                 onNavigateToLogin={() => setCurrentView("login")}
                 onNavigateToProfile={() => setCurrentView("profile")}
-                onRegisterSuccess={() => setCurrentView("profile")}
+                onRegisterSuccess={() => setCurrentView("login")}
             />
         );
     }

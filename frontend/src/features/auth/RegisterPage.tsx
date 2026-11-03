@@ -116,8 +116,6 @@ export default function RegisterPage({
             }
 
             if (data?.id) {
-                localStorage.setItem("lifeSwapUserId", data.id.toString());
-                localStorage.setItem("lifeSwapUser", JSON.stringify(data));
                 onRegisterSuccess?.();
             }
 

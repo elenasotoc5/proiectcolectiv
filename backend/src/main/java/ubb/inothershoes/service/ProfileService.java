@@ -1,6 +1,8 @@
 package ubb.inothershoes.service;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -10,6 +12,7 @@ import ubb.inothershoes.model.ActivityDto;
 import ubb.inothershoes.model.UserProfileRequest;
 import ubb.inothershoes.model.UserProfileResponse;
 import ubb.inothershoes.repository.UserRepository;
+import ubb.inothershoes.security.UserPrincipal;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -35,6 +38,8 @@ public class ProfileService {
 
     @Transactional
     public UserProfileResponse updateProfile(Long userId, UserProfileRequest request) {
+        verifyUserOwnership(userId);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + userId));
 
@@ -108,5 +113,14 @@ public class ProfileService {
         res.setActivities(activityDtos);
 
         return res;
+    }
+
+    private void verifyUserOwnership(Long targetUserId) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            if (!principal.getId().equals(targetUserId)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not authorized to modify another user's profile.");
+            }
+        }
     }
 }

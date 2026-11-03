@@ -30,7 +30,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { getAuthHeaders } from "@/lib/auth";
+import { getAuthHeaders, clearStoredAuth } from "@/lib/auth";
 import {
     Dialog,
     DialogContent,
@@ -183,6 +183,11 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         ...getAuthHeaders(),
                     },
                 });
+                if (response.status === 401) {
+                    clearStoredAuth();
+                    onLogout?.();
+                    return;
+                }
                 if (response.ok) {
                     const data = await response.json();
                     setProfile((prev) => ({
@@ -209,7 +214,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         };
 
         fetchProfile();
-    }, []);
+    }, [onLogout]);
 
     const handleTogglePreference = (tag: string) => {
         setProfile((prev) => {
@@ -373,6 +378,14 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             });
 
             if (!response.ok) {
+                if (response.status === 401) {
+                    clearStoredAuth();
+                    setStatusMessage({
+                        type: "error",
+                        text: "Session expired or unauthorized. Please log in again.",
+                    });
+                    return;
+                }
                 const errData = await response.json().catch(() => null);
                 throw new Error(errData?.message || "Failed to save profile changes.");
             }
