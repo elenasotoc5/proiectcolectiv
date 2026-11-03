@@ -2,6 +2,7 @@ package ubb.inothershoes.controller;
 
 import ubb.inothershoes.api.AuthApi;
 import ubb.inothershoes.model.RegisterRequest;
+import ubb.inothershoes.model.LoginRequest;
 import ubb.inothershoes.model.UserResponse;
 import ubb.inothershoes.service.AuthService;
 import jakarta.validation.Valid;
@@ -22,5 +23,11 @@ public class AuthController implements AuthApi {
     public ResponseEntity<UserResponse> registerUser(@Valid RegisterRequest registerRequest) {
         UserResponse response = authService.register(registerRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Override
+    public ResponseEntity<UserResponse> loginUser(@Valid LoginRequest loginRequest) {
+        UserResponse response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
     }
 }

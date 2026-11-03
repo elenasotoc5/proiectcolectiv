@@ -28,6 +28,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { getAuthHeaders } from "@/lib/auth";
 import {
     Dialog,
     DialogContent,
@@ -179,7 +180,11 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         const fetchProfile = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`${API_URL}/api/v1/users/${userIdNum}/profile`);
+                const response = await fetch(`${API_URL}/api/v1/users/${userIdNum}/profile`, {
+                    headers: {
+                        ...getAuthHeaders(),
+                    },
+                });
                 if (response.ok) {
                     const data = await response.json();
                     setProfile((prev) => ({
@@ -358,6 +363,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
+                    ...getAuthHeaders(),
                 },
                 body: JSON.stringify({
                     bio: profile.bio,

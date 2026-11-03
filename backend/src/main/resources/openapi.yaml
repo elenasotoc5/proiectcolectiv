@@ -53,6 +53,32 @@ paths:
               schema:
                 $ref: "./models.yaml#/components/schemas/ErrorResponse"
 
+  /api/v1/auth/login:
+    post:
+      summary: Log in an existing user
+      operationId: loginUser
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./models.yaml#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/UserResponse"
+        "401":
+          description: Invalid email or password
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/ErrorResponse"
+
   /api/v1/users/{userId}/profile:
     get:
       summary: Get user profile, preferences, and host activities

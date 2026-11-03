@@ -10,6 +10,7 @@ import {
 interface HomePageProps {
     isLoggedIn?: boolean;
     onGetStartedClick?: () => void;
+    onSignInClick?: () => void;
     onProfileClick?: () => void;
     onLogout?: () => void;
 }
@@ -17,6 +18,7 @@ interface HomePageProps {
 export default function HomePage({
     isLoggedIn = false,
     onGetStartedClick,
+    onSignInClick,
     onProfileClick,
     onLogout,
 }: HomePageProps) {
@@ -39,9 +41,19 @@ export default function HomePage({
                                 </Button>
                             </>
                         ) : (
-                            <Button size="sm" onClick={onGetStartedClick}>
-                                Register
-                            </Button>
+                            <>
+                                <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={onSignInClick}
+                                    className="border-primary text-primary hover:bg-primary hover:text-primary-foreground font-semibold"
+                                >
+                                    Sign In
+                                </Button>
+                                <Button size="sm" onClick={onGetStartedClick}>
+                                    Register
+                                </Button>
+                            </>
                         )}
                     </div>
                 </div>

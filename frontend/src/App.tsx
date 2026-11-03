@@ -1,35 +1,37 @@
-
-// import HomePage from "@/features/homepage/HomePage";
-
-// function App() {
-//     return <HomePage />;
-// }
-
-// export default App;
 import { useState } from "react";
 import HomePage from "@/features/homepage/HomePage";
 import RegisterPage from "@/features/auth/RegisterPage";
+import LoginPage from "@/features/auth/LoginPage";
 import ProfilePage from "@/features/profile/ProfilePage";
+import { isUserAuthenticated, clearStoredAuth } from "@/lib/auth";
 
 function App() {
-    const [currentView, setCurrentView] = useState<"home" | "register" | "profile">("home");
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-        return Boolean(localStorage.getItem("lifeSwapUserId"));
+    const [currentView, setCurrentView] = useState<"home" | "login" | "register" | "profile" | "dashboard">(() => {
+        return isUserAuthenticated() ? "profile" : "home";
     });
 
     const handleLogout = () => {
-        localStorage.removeItem("lifeSwapUserId");
-        localStorage.removeItem("lifeSwapUser");
-        setIsLoggedIn(false);
+        clearStoredAuth();
         setCurrentView("home");
     };
 
     if (currentView === "register") {
         return (
-            <RegisterPage
-                onNavigateBack={() => setCurrentView("home")}
+            <RegisterPage 
+                onNavigateBack={() => setCurrentView("home")} 
+                onNavigateToLogin={() => setCurrentView("login")}
                 onNavigateToProfile={() => setCurrentView("profile")}
-                onRegisterSuccess={() => setIsLoggedIn(true)}
+                onRegisterSuccess={() => setCurrentView("profile")}
+            />
+        );
+    }
+
+    if (currentView === "login") {
+        return (
+            <LoginPage 
+                onNavigateBack={() => setCurrentView("home")}
+                onNavigateToRegister={() => setCurrentView("register")}
+                onLoginSuccess={() => setCurrentView("profile")} 
             />
         );
     }
@@ -38,15 +40,39 @@ function App() {
         return (
             <ProfilePage
                 onNavigateBack={() => setCurrentView("home")}
-                onLogout={isLoggedIn ? handleLogout : undefined}
+                onLogout={handleLogout}
             />
         );
     }
 
+    if (currentView === "dashboard") {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+                <h1 className="text-3xl font-bold">Welcome to your LifeSwap Dashboard!</h1>
+                <p className="text-muted-foreground">You are successfully logged in.</p>
+                <div className="flex gap-4">
+                    <button 
+                        onClick={() => setCurrentView("profile")}
+                        className="text-primary underline font-medium cursor-pointer"
+                    >
+                        View Profile
+                    </button>
+                    <button 
+                        onClick={handleLogout}
+                        className="text-destructive underline font-medium cursor-pointer"
+                    >
+                        Log out
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <HomePage
-            isLoggedIn={isLoggedIn}
-            onGetStartedClick={() => setCurrentView("register")}
+        <HomePage 
+            isLoggedIn={isUserAuthenticated()}
+            onGetStartedClick={() => setCurrentView("register")} 
+            onSignInClick={() => setCurrentView("login")}
             onProfileClick={() => setCurrentView("profile")}
             onLogout={handleLogout}
         />
