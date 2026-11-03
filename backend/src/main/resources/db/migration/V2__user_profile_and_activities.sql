@@ -1,6 +1,5 @@
 ALTER TABLE users
     ADD COLUMN bio TEXT,
-    ADD COLUMN occupation VARCHAR(255),
     ADD COLUMN university VARCHAR(255),
     ADD COLUMN field_of_study VARCHAR(255),
     ADD COLUMN study_year INT,
