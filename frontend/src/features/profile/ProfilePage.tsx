@@ -484,9 +484,9 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         </div>
 
                         <div className="flex flex-wrap items-center gap-2 text-sm font-medium self-end sm:self-center">
-                            <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasHomeDetails ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>
-                                {hasHomeDetails ? <Check className="size-3" /> : <AlertCircle className="size-3" />}
-                                {hasHomeDetails ? "Home Details Set" : "Home Details Missing"}
+                            <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasHomeDetails ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-destructive/15 text-destructive border border-destructive/30 font-medium"}`}>
+                                {hasHomeDetails ? <Check className="size-3" /> : <AlertCircle className="size-3 text-destructive" />}
+                                {hasHomeDetails ? "Home Details Set" : "Home Details Missing (Required)"}
                             </span>
                             <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasEnoughPreferences ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>
                                 {hasEnoughPreferences ? <Check className="size-3" /> : <AlertCircle className="size-3" />}
@@ -537,20 +537,42 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             </Button>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
-                            <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
-                                <MapPin className="size-3.5 text-primary" />
+                        <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
+                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${!profile.location?.trim() ? "bg-destructive/10 text-destructive border border-destructive/30 font-medium" : "bg-muted text-muted-foreground"}`}>
+                                <MapPin className={`size-3.5 ${!profile.location?.trim() ? "text-destructive" : "text-primary"}`} />
                                 <span>{profile.location || "City not set"}</span>
+                                {!profile.location?.trim() && (
+                                    <span className="text-destructive font-semibold text-[11px]">(Required)</span>
+                                )}
                             </div>
-                            <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
-                                <Building2 className="size-3.5 text-primary" />
+                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${!profile.address?.trim() ? "bg-destructive/10 text-destructive border border-destructive/30 font-medium" : "bg-muted text-muted-foreground"}`}>
+                                <Building2 className={`size-3.5 ${!profile.address?.trim() ? "text-destructive" : "text-primary"}`} />
                                 <span>{profile.address || "Address not set"}</span>
+                                {!profile.address?.trim() && (
+                                    <span className="text-destructive font-semibold text-[11px]">(Required)</span>
+                                )}
                             </div>
-                            <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
-                                <Home className="size-3.5 text-primary" />
+                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${!profile.housingType?.trim() ? "bg-destructive/10 text-destructive border border-destructive/30 font-medium" : "bg-muted text-muted-foreground"}`}>
+                                <Home className={`size-3.5 ${!profile.housingType?.trim() ? "text-destructive" : "text-primary"}`} />
                                 <span>{profile.housingType || "Housing not set"}</span>
+                                {!profile.housingType?.trim() && (
+                                    <span className="text-destructive font-semibold text-[11px]">(Required)</span>
+                                )}
                             </div>
                         </div>
+
+                        {!hasHomeDetails && (
+                            <div className="flex items-center gap-2 text-xs text-destructive font-medium bg-destructive/10 border border-destructive/20 px-3.5 py-2 rounded-xl mb-4">
+                                <AlertCircle className="size-4 shrink-0 text-destructive" />
+                                <span>
+                                    <strong>Required fields missing:</strong> {[
+                                        !profile.location?.trim() ? "City & Country" : null,
+                                        !profile.address?.trim() ? "Home Address" : null,
+                                        !profile.housingType?.trim() ? "Housing Arrangement" : null,
+                                    ].filter(Boolean).join(", ")}. Please edit info to complete these details before matching.
+                                </span>
+                            </div>
+                        )}
 
                         <p className="text-sm leading-relaxed text-muted-foreground bg-muted/30 p-4 rounded-xl border border-border/50">
                             {profile.bio || "No bio provided yet. Tell others what your daily life and routine look like!"}
@@ -738,8 +760,8 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 <span>Requirements fulfilled for Life Swap matching</span>
                             </div>
                         ) : (
-                            <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 font-medium">
-                                <AlertCircle className="size-5" />
+                            <div className="flex items-center gap-2 text-sm text-destructive font-medium">
+                                <AlertCircle className="size-5 shrink-0" />
                                 <span>
                                     Needs: {[
                                         !hasHomeDetails ? "home details (city, address, housing)" : null,
@@ -823,7 +845,11 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     value={editForm.location}
                                     onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
                                     required
+                                    className={!editForm.location.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                                 />
+                                {!editForm.location.trim() && (
+                                    <p className="text-xs text-destructive font-medium">City & Country is required</p>
+                                )}
                             </div>
                         </div>
 
@@ -836,7 +862,11 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     value={editForm.address}
                                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                                     required
+                                    className={!editForm.address.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                                 />
+                                {!editForm.address.trim() && (
+                                    <p className="text-xs text-destructive font-medium">Home address is required</p>
+                                )}
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="housingType">Housing Arrangement <span className="text-destructive">*</span></Label>
@@ -844,6 +874,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     id="housingType"
                                     value={editForm.housingType}
                                     onChange={(e) => setEditForm({ ...editForm, housingType: e.target.value })}
+                                    className={!editForm.housingType?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
                                 >
                                     <NativeSelectOption value="Entire Apartment">Entire Apartment</NativeSelectOption>
                                     <NativeSelectOption value="Private Room in Shared Apartment">Private Room in Shared Apartment</NativeSelectOption>
@@ -852,6 +883,9 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     <NativeSelectOption value="Townhouse / Loft">Townhouse / Loft</NativeSelectOption>
                                     <NativeSelectOption value="Suburban Home with Garden">Suburban Home with Garden</NativeSelectOption>
                                 </NativeSelect>
+                                {!editForm.housingType?.trim() && (
+                                    <p className="text-xs text-destructive font-medium">Housing arrangement is required</p>
+                                )}
                             </div>
                         </div>
 
