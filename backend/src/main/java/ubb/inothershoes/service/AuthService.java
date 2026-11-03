@@ -72,7 +72,9 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
         }
 
-        return createUserResponse(user);
+        UserResponse response = createUserResponse(user);
+        response.setAccessToken(java.util.UUID.randomUUID().toString());
+        return response;
     }
 
     private UserResponse createUserResponse(User user) {

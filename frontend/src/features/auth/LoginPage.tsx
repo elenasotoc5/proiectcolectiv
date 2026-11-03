@@ -11,6 +11,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import { setStoredAccessToken, USER_ID_KEY, USER_KEY } from "@/lib/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -103,12 +104,22 @@ export default function LoginPage({
                 return;
             }
 
-            // Handle successful authentication
-            setSuccessMessage("Login successful! Redirecting...");
-            
-            setTimeout(() => {
-                onLoginSuccess();
-            }, 1000);
+            // Save access token to local storage for subsequent requests
+            const token = data?.accessToken || data?.token || data?.access_token;
+            if (token) {
+                setStoredAccessToken(token);
+            }
+
+            if (data?.id) {
+                localStorage.setItem(USER_ID_KEY, data.id.toString());
+            }
+
+            if (data) {
+                localStorage.setItem(USER_KEY, JSON.stringify(data));
+            }
+
+            // Immediately proceed to the authenticated view without artificial delay
+            onLoginSuccess();
             
         } catch (err) {
             // Log technical error for debugging 
@@ -181,6 +192,8 @@ export default function LoginPage({
                                     value={formData.email}
                                     onChange={handleChange}
                                     disabled={isLoading}
+                                    autoComplete="email"
+                                    required
                                 />
                             </div>
 
@@ -194,6 +207,8 @@ export default function LoginPage({
                                     value={formData.password}
                                     onChange={handleChange}
                                     disabled={isLoading}
+                                    autoComplete="current-password"
+                                    required
                                 />
                             </div>
                         </CardContent>

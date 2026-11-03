@@ -2,10 +2,17 @@ import { useState } from "react";
 import HomePage from "@/features/homepage/HomePage";
 import RegisterPage from "@/features/auth/RegisterPage";
 import LoginPage from "@/features/auth/LoginPage";
+import { isUserAuthenticated, clearStoredAuth } from "@/lib/auth";
 
 function App() {
-    
-    const [currentView, setCurrentView] = useState<"home" | "login" | "register" | "dashboard">("home");
+    const [currentView, setCurrentView] = useState<"home" | "login" | "register" | "dashboard">(() => {
+        return isUserAuthenticated() ? "dashboard" : "home";
+    });
+
+    const handleLogout = () => {
+        clearStoredAuth();
+        setCurrentView("home");
+    };
 
     if (currentView === "register") {
         return (
@@ -32,8 +39,8 @@ function App() {
                 <h1 className="text-3xl font-bold">Welcome to your LifeSwap Dashboard! </h1>
                 <p className="text-muted-foreground">You are successfully logged in.</p>
                 <button 
-                    onClick={() => setCurrentView("home")}
-                    className="text-primary underline font-medium"
+                    onClick={handleLogout}
+                    className="text-primary underline font-medium cursor-pointer"
                 >
                     Log out
                 </button>

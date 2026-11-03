@@ -53,6 +53,9 @@ components:
         email:
           type: string
           example: "john.doe@example.com"
+        accessToken:
+          type: string
+          example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
         createdAt:
           type: string
           format: date-time
