@@ -8,16 +8,42 @@ import {
 } from "@/components/ui/card";
 
 interface HomePageProps {
+    isLoggedIn?: boolean;
     onGetStartedClick?: () => void;
+    onProfileClick?: () => void;
+    onLogout?: () => void;
 }
 
-export default function HomePage({ onGetStartedClick }: HomePageProps) {
+export default function HomePage({
+    isLoggedIn = false,
+    onGetStartedClick,
+    onProfileClick,
+    onLogout,
+}: HomePageProps) {
     return (
         <main className="min-h-screen bg-background text-foreground">
             <header className="border-b border-border">
-                <div className="mx-auto flex max-w-6xl items-center gap-2 px-6 py-5">
-                    <House className="size-6 text-primary" />
-                    <span className="text-xl font-bold">LifeSwap</span>
+                <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+                    <div className="flex items-center gap-2">
+                        <House className="size-6 text-primary" />
+                        <span className="text-xl font-bold">LifeSwap</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {isLoggedIn ? (
+                            <>
+                                <Button variant="ghost" size="sm" onClick={onProfileClick}>
+                                    My Profile
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={onLogout}>
+                                    Log Out
+                                </Button>
+                            </>
+                        ) : (
+                            <Button size="sm" onClick={onGetStartedClick}>
+                                Register
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </header>
 

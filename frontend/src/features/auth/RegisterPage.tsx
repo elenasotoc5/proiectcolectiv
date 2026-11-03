@@ -17,9 +17,15 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 interface RegisterPageProps {
     onNavigateBack: () => void;
+    onNavigateToProfile?: () => void;
+    onRegisterSuccess?: () => void;
 }
 
-export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
+export default function RegisterPage({
+    onNavigateBack,
+    onNavigateToProfile,
+    onRegisterSuccess,
+}: RegisterPageProps) {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
@@ -107,6 +113,12 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
                 return;
             }
 
+            if (data?.id) {
+                localStorage.setItem("lifeSwapUserId", data.id.toString());
+                localStorage.setItem("lifeSwapUser", JSON.stringify(data));
+                onRegisterSuccess?.();
+            }
+
             setSuccessMessage("Account created successfully! You can now log in.");
             setFormData({
                 firstName: "",
@@ -170,9 +182,20 @@ export default function RegisterPage({ onNavigateBack }: RegisterPageProps) {
 
                             {/* Success message */}
                             {successMessage && (
-                                <div className="flex items-center gap-2 rounded-md bg-emerald-500/15 p-3 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                                    <CheckCircle2 className="size-4 shrink-0" />
-                                    <span>{successMessage}</span>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2 rounded-md bg-emerald-500/15 p-3 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                                        <CheckCircle2 className="size-4 shrink-0" />
+                                        <span>{successMessage}</span>
+                                    </div>
+                                    {onNavigateToProfile && (
+                                        <Button
+                                            type="button"
+                                            className="w-full gap-2 font-semibold"
+                                            onClick={onNavigateToProfile}
+                                        >
+                                            Set Up Your Student Profile &rarr;
+                                        </Button>
+                                    )}
                                 </div>
                             )}
 

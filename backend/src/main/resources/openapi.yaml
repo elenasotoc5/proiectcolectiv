@@ -52,3 +52,68 @@ paths:
             application/json:
               schema:
                 $ref: "./models.yaml#/components/schemas/ErrorResponse"
+
+  /api/v1/users/{userId}/profile:
+    get:
+      summary: Get user profile, preferences, and host activities
+      operationId: getUserProfile
+      tags:
+        - Profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: User profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/UserProfileResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/ErrorResponse"
+
+    put:
+      summary: Update user profile, preferences, and host activities
+      operationId: updateUserProfile
+      tags:
+        - Profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./models.yaml#/components/schemas/UserProfileRequest"
+      responses:
+        "200":
+          description: User profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/UserProfileResponse"
+        "400":
+          description: Validation error (e.g. less than 3 preferences)
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/ErrorResponse"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/ErrorResponse"
