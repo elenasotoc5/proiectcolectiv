@@ -1,9 +1,12 @@
+
 package ubb.inothershoes.service;
 
 import ubb.inothershoes.entity.User;
 import ubb.inothershoes.repository.UserRepository;
 import ubb.inothershoes.model.RegisterRequest;
+import ubb.inothershoes.model.LoginRequest;
 import ubb.inothershoes.model.UserResponse;
+
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -13,11 +16,12 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
+    private static final String DUMMY_HASH ="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(UserRepository userRepository,PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
@@ -27,7 +31,10 @@ public class AuthService {
         String normalizedEmail = request.getEmail().toLowerCase().trim();
 
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Email is already registered"
+            );
         }
 
         User user = new User();
@@ -37,18 +44,46 @@ public class AuthService {
         user.setLastName(request.getLastName().trim());
 
         User saved;
+
         try {
             saved = userRepository.saveAndFlush(user);
         } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Email is already registered");
         }
 
+        return createUserResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public UserResponse login(LoginRequest request) {
+
+        String normalizedEmail = request.getEmail().toLowerCase().trim();
+
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+
+        if (user == null) {
+
+            passwordEncoder.matches(request.getPassword(),DUMMY_HASH);
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+
+        if (!passwordEncoder.matches( request.getPassword(),user.getPasswordHash())) {
+
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
+
+        return createUserResponse(user);
+    }
+
+    private UserResponse createUserResponse(User user) {
         UserResponse response = new UserResponse();
-        response.setId(saved.getId());
-        response.setFirstName(saved.getFirstName());
-        response.setLastName(saved.getLastName());
-        response.setEmail(saved.getEmail());
-        response.setCreatedAt(saved.getCreatedAt());
+
+        response.setId(user.getId());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setEmail(user.getEmail());
+        response.setCreatedAt(user.getCreatedAt());
+
         return response;
     }
 }
