@@ -8,7 +8,8 @@ import {
     Plus,
     Trash2,
     Edit3,
-    GraduationCap,
+    Briefcase,
+    User,
     MapPin,
     Home,
     Sparkles,
@@ -55,9 +56,10 @@ export interface UserProfile {
     lastName: string;
     email: string;
     bio: string;
-    university: string;
-    fieldOfStudy: string;
-    studyYear: number | null;
+    occupation: string;
+    university?: string;
+    fieldOfStudy?: string;
+    studyYear?: number | null;
     location: string;
     housingType: string;
     avatarUrl: string;
@@ -71,19 +73,20 @@ interface ProfilePageProps {
 }
 
 const CURATED_PREFERENCES = [
-    { category: "📚 Study & Routine", tags: ["Quiet Study", "Early Bird", "Night Owl", "Library Regular", "Coffee Shop Studier"] },
-    { category: "💻 Hobbies & Passions", tags: ["Tech & Coding", "Gaming", "Photography", "Arts & Museums", "Reading & Literature", "Music & Concerts"] },
-    { category: "🏃 Lifestyle & Movement", tags: ["Sports & Gym", "Running", "Hiking & Nature", "Cooking & Foodie", "Board Games", "Cycling"] },
-    { category: "🍻 Campus & Social", tags: ["Nightlife & Bars", "Campus Events", "Social & Extrovert", "Cozy & Introvert", "Language Exchange"] },
+    { category: "⏰ Daily Routine", tags: ["Early Bird", "Night Owl", "Remote Worker", "Office Commuter", "Active & On-the-Go", "Peace & Quiet"] },
+    { category: "💻 Hobbies & Passions", tags: ["Tech & Coding", "Gaming", "Photography", "Arts & Museums", "Reading & Literature", "Music & Concerts", "Film & Cinema"] },
+    { category: "🏃 Lifestyle & Movement", tags: ["Sports & Gym", "Running", "Hiking & Outdoors", "Cooking & Foodie", "Coffee Culture", "Cycling", "Yoga & Wellness"] },
+    { category: "🍻 Social & Community", tags: ["Social & Extrovert", "Cozy & Introvert", "Food & Dining Out", "Live Events", "Language Exchange", "Pet Lover"] },
 ];
 
 const ACTIVITY_CATEGORIES = [
-    "Campus & Academic Life",
-    "Sports & Fitness",
     "Food, Coffee & Dining",
+    "Sports & Fitness",
+    "Work & Productivity",
+    "Culture & Arts",
+    "Outdoors & Nature",
     "Nightlife & Social",
-    "Local Gems & Culture",
-    "Everyday Living",
+    "Local Gems & Neighborhood",
 ];
 
 const EMPTY_PROFILE: UserProfile = {
@@ -92,11 +95,9 @@ const EMPTY_PROFILE: UserProfile = {
     lastName: "",
     email: "",
     bio: "",
-    university: "",
-    fieldOfStudy: "",
-    studyYear: 1,
+    occupation: "",
     location: "",
-    housingType: "Shared Student Flat (Private Room)",
+    housingType: "Entire Apartment",
     avatarUrl: "",
     preferences: [],
     activities: [],
@@ -140,11 +141,9 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         firstName: "",
         lastName: "",
         bio: "",
-        university: "",
-        fieldOfStudy: "",
-        studyYear: "1",
+        occupation: "",
         location: "",
-        housingType: "Shared Student Flat (Private Room)",
+        housingType: "Entire Apartment",
         avatarUrl: "",
     });
 
@@ -194,9 +193,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         lastName: data.lastName ?? prev.lastName,
                         email: data.email ?? prev.email,
                         bio: data.bio ?? "",
-                        university: data.university ?? "",
-                        fieldOfStudy: data.fieldOfStudy ?? "",
-                        studyYear: data.studyYear ?? null,
+                        occupation: data.occupation ?? prev.occupation ?? "",
                         location: data.location ?? "",
                         housingType: data.housingType ?? prev.housingType,
                         avatarUrl: data.avatarUrl ?? "",
@@ -246,11 +243,9 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             firstName: profile.firstName,
             lastName: profile.lastName,
             bio: profile.bio,
-            university: profile.university,
-            fieldOfStudy: profile.fieldOfStudy,
-            studyYear: (profile.studyYear || 1).toString(),
+            occupation: profile.occupation || "",
             location: profile.location,
-            housingType: profile.housingType || "Shared Student Flat",
+            housingType: profile.housingType || "Entire Apartment",
             avatarUrl: profile.avatarUrl || "",
         });
         setIsEditProfileOpen(true);
@@ -264,9 +259,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             firstName: editForm.firstName.trim() || prev.firstName,
             lastName: editForm.lastName.trim() || prev.lastName,
             bio: editForm.bio.trim(),
-            university: editForm.university.trim(),
-            fieldOfStudy: editForm.fieldOfStudy.trim(),
-            studyYear: parseInt(editForm.studyYear, 10) || null,
+            occupation: editForm.occupation.trim(),
             location: editForm.location.trim(),
             housingType: editForm.housingType,
             avatarUrl: editForm.avatarUrl.trim(),
@@ -367,9 +360,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 },
                 body: JSON.stringify({
                     bio: profile.bio,
-                    university: profile.university,
-                    fieldOfStudy: profile.fieldOfStudy,
-                    studyYear: profile.studyYear,
+                    occupation: profile.occupation,
                     location: profile.location,
                     housingType: profile.housingType,
                     avatarUrl: profile.avatarUrl,
@@ -385,7 +376,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
 
             setStatusMessage({
                 type: "success",
-                text: "Student Profile saved successfully! Your profile is ready for Life Swap matching.",
+                text: "Profile saved successfully! Your profile is ready for Life Swap matching.",
             });
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : "Could not connect to backend server.";
@@ -414,7 +405,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         <House className="size-6 text-primary" />
                         <span className="text-xl font-bold tracking-tight">LifeSwap</span>
                         <Badge variant="outline" className="ml-2 text-xs font-normal flex items-center gap-1">
-                            Student Profile {isLoading && <Loader2 className="size-3 animate-spin" />}
+                            Profile {isLoading && <Loader2 className="size-3 animate-spin" />}
                         </Badge>
                     </div>
                     <div className="flex items-center gap-3">
@@ -481,8 +472,8 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
                                     {isReadyForMatching
-                                        ? "Your student profile has all required preferences and activities for life swap pairing."
-                                        : "Students need at least 3 preferences and 1 host activity so the app knows who to match you with."}
+                                        ? "Your profile has all required preferences and activities for life swap pairing."
+                                        : "Profiles need at least 3 preferences and 1 host activity so we can match you with the right swap partner."}
                                 </p>
                             </div>
                         </div>
@@ -500,7 +491,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     </CardContent>
                 </Card>
 
-                {/* Student Hero Header Card */}
+                {/* Profile Hero Header Card */}
                 <Card className="overflow-hidden">
                     <div className="h-28 bg-gradient-to-r from-primary/30 via-primary/10 to-accent" />
                     <CardContent className="relative px-6 pb-6 pt-0">
@@ -512,30 +503,18 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     ) : profile.firstName || profile.lastName ? (
                                         `${profile.firstName?.[0] || ""}${profile.lastName?.[0] || ""}`
                                     ) : (
-                                        <GraduationCap className="size-10 text-primary-foreground" />
+                                        <User className="size-10 text-primary-foreground" />
                                     )}
                                 </div>
                                 <div className="mb-1">
                                     <h2 className="text-2xl font-bold tracking-tight">
                                         {profile.firstName || profile.lastName
                                             ? `${profile.firstName} ${profile.lastName}`.trim()
-                                            : "Student Profile"}
+                                            : "Your Profile"}
                                     </h2>
                                     <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                                        <GraduationCap className="size-4 text-primary" />
-                                        <span>{profile.university || "University not set"}</span>
-                                        {profile.fieldOfStudy && (
-                                            <>
-                                                <span>•</span>
-                                                <span>{profile.fieldOfStudy}</span>
-                                            </>
-                                        )}
-                                        {profile.studyYear && (
-                                            <>
-                                                <span>•</span>
-                                                <span>Year {profile.studyYear}</span>
-                                            </>
-                                        )}
+                                        <Briefcase className="size-4 text-primary" />
+                                        <span>{profile.occupation || "Profession / Occupation not set"}</span>
                                     </p>
                                 </div>
                             </div>
@@ -562,9 +541,9 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             </div>
                         </div>
 
-                        {/* Student Bio */}
+                        {/* Bio */}
                         <p className="text-sm leading-relaxed text-muted-foreground bg-muted/30 p-4 rounded-xl border border-border/50">
-                            {profile.bio || "No student bio provided yet. Tell others what your daily life and routine look like!"}
+                            {profile.bio || "No bio provided yet. Tell others what your daily life and routine look like!"}
                         </p>
                     </CardContent>
                 </Card>
@@ -579,7 +558,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     Matching Preferences & Interests
                                 </CardTitle>
                                 <CardDescription className="mt-1">
-                                    Choose at least <strong className="text-foreground">3 preferences</strong> to help our algorithm match you with students having complementary or similar vibes.
+                                    Choose at least <strong className="text-foreground">3 preferences</strong> to help our algorithm match you with members having complementary or similar vibes.
                                 </CardDescription>
                             </div>
                             <Badge
@@ -674,7 +653,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                     Host Activities ("In My Shoes")
                                 </CardTitle>
                                 <CardDescription className="mt-1">
-                                    What can your swap partner experience in your city and campus while living your routine? (Minimum 1 required)
+                                    What can your swap partner experience in your city and neighborhood while living your routine? (Minimum 1 required)
                                 </CardDescription>
                             </div>
                             <Button
@@ -693,7 +672,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 <CalendarCheck className="size-10 text-muted-foreground/60 mb-3" />
                                 <h4 className="font-semibold text-base mb-1">No host activities added yet</h4>
                                 <p className="text-sm text-muted-foreground max-w-sm mb-4">
-                                    Add at least 1 activity (e.g. your favorite local cafe, gym access, or club seminar) so the other student knows what they'll experience.
+                                    Add at least 1 activity (e.g. your favorite local cafe, gym access, co-working desk, or neighborhood spot) so your swap partner knows what they'll experience.
                                 </p>
                                 <Button size="sm" onClick={() => handleOpenActivityModal(null)} className="gap-2">
                                     <Plus className="size-4" /> Add Your First Activity
@@ -778,9 +757,9 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>Edit Student Information</DialogTitle>
+                        <DialogTitle>Edit Profile Information</DialogTitle>
                         <DialogDescription>
-                            Update your basic university and housing details visible to prospective swap partners.
+                            Update your personal details, occupation, and housing info visible to prospective swap partners.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -811,7 +790,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             <Textarea
                                 id="bio"
                                 rows={3}
-                                placeholder="Describe your student lifestyle, vibe, and hobbies..."
+                                placeholder="Describe your lifestyle, routine, hobbies, and what you love about your daily life..."
                                 value={editForm.bio}
                                 onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
                             />
@@ -819,40 +798,13 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
 
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-1.5">
-                                <Label htmlFor="university">University</Label>
+                                <Label htmlFor="occupation">Occupation / Profession</Label>
                                 <Input
-                                    id="university"
-                                    placeholder="e.g. Babeș-Bolyai University"
-                                    value={editForm.university}
-                                    onChange={(e) => setEditForm({ ...editForm, university: e.target.value })}
+                                    id="occupation"
+                                    placeholder="e.g. Software Engineer, Designer, Teacher"
+                                    value={editForm.occupation}
+                                    onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })}
                                 />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="fieldOfStudy">Field of Study</Label>
-                                <Input
-                                    id="fieldOfStudy"
-                                    placeholder="e.g. Computer Science / Medicine"
-                                    value={editForm.fieldOfStudy}
-                                    onChange={(e) => setEditForm({ ...editForm, fieldOfStudy: e.target.value })}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="studyYear">Study Year</Label>
-                                <NativeSelect
-                                    id="studyYear"
-                                    value={editForm.studyYear}
-                                    onChange={(e) => setEditForm({ ...editForm, studyYear: e.target.value })}
-                                >
-                                    <NativeSelectOption value="1">1st Year (Bachelor)</NativeSelectOption>
-                                    <NativeSelectOption value="2">2nd Year (Bachelor)</NativeSelectOption>
-                                    <NativeSelectOption value="3">3rd Year (Bachelor)</NativeSelectOption>
-                                    <NativeSelectOption value="4">4th Year (Bachelor)</NativeSelectOption>
-                                    <NativeSelectOption value="5">Master's Student</NativeSelectOption>
-                                    <NativeSelectOption value="6">PhD Student</NativeSelectOption>
-                                </NativeSelect>
                             </div>
                             <div className="space-y-1.5">
                                 <Label htmlFor="location">City & Country</Label>
@@ -872,10 +824,12 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 value={editForm.housingType}
                                 onChange={(e) => setEditForm({ ...editForm, housingType: e.target.value })}
                             >
-                                <NativeSelectOption value="Shared Student Flat (Private Room)">Shared Student Flat (Private Room)</NativeSelectOption>
-                                <NativeSelectOption value="Campus Dormitory Room">Campus Dormitory Room</NativeSelectOption>
-                                <NativeSelectOption value="Private Studio / Apartment">Private Studio / Apartment</NativeSelectOption>
-                                <NativeSelectOption value="Student Residence">Student Residence</NativeSelectOption>
+                                <NativeSelectOption value="Entire Apartment">Entire Apartment</NativeSelectOption>
+                                <NativeSelectOption value="Private Room in Shared Apartment">Private Room in Shared Apartment</NativeSelectOption>
+                                <NativeSelectOption value="Studio Apartment">Studio Apartment</NativeSelectOption>
+                                <NativeSelectOption value="House / Villa">House / Villa</NativeSelectOption>
+                                <NativeSelectOption value="Townhouse / Loft">Townhouse / Loft</NativeSelectOption>
+                                <NativeSelectOption value="Suburban Home with Garden">Suburban Home with Garden</NativeSelectOption>
                             </NativeSelect>
                         </div>
 
@@ -909,7 +863,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             {activityForm.index !== null ? "Edit Host Activity" : "Add Host Activity"}
                         </DialogTitle>
                         <DialogDescription>
-                            Share an experience, routine, or access pass that the other student will enjoy during the life swap.
+                            Share an experience, routine, or access pass that your swap partner will enjoy during the life swap.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -918,7 +872,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             <Label htmlFor="actTitle">Activity Title</Label>
                             <Input
                                 id="actTitle"
-                                placeholder="e.g. Attend our weekly robotics club meet"
+                                placeholder="e.g. Access to local bouldering gym & community meetups"
                                 value={activityForm.title}
                                 onChange={(e) => setActivityForm({ ...activityForm, title: e.target.value })}
                                 required
@@ -945,7 +899,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             <Textarea
                                 id="actDesc"
                                 rows={3}
-                                placeholder="Where is it, what to expect, and how do they participate? (e.g. My lab pass is on the desk, Thursday at 4 PM)..."
+                                placeholder="Where is it, what to expect, and how do they participate? (e.g. The guest pass card is on the kitchen counter, open 7 AM - 10 PM daily)..."
                                 value={activityForm.description}
                                 onChange={(e) => setActivityForm({ ...activityForm, description: e.target.value })}
                             />

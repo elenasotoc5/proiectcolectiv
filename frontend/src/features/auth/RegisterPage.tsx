@@ -195,7 +195,7 @@ export default function RegisterPage({
                                             className="w-full gap-2 font-semibold"
                                             onClick={onNavigateToProfile}
                                         >
-                                            Set Up Your Student Profile &rarr;
+                                            Set Up Your Profile &rarr;
                                         </Button>
                                     )}
                                 </div>

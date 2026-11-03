@@ -30,6 +30,8 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    private String occupation;
+
     private String university;
 
     @Column(name = "field_of_study")
@@ -77,6 +79,9 @@ public class User {
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
+
+    public String getOccupation() { return occupation; }
+    public void setOccupation(String occupation) { this.occupation = occupation; }
 
     public String getUniversity() { return university; }
     public void setUniversity(String university) { this.university = university; }

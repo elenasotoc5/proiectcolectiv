@@ -39,14 +39,15 @@ public class ProfileService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + userId));
 
         if (request.getPreferences() == null || request.getPreferences().size() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Students must add at least 3 preferences for matching.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please add at least 3 preferences for matching.");
         }
 
         if (request.getActivities() == null || request.getActivities().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Students must provide at least 1 host activity for the swap partner.");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please provide at least 1 host activity for the swap partner.");
         }
 
         user.setBio(request.getBio());
+        user.setOccupation(request.getOccupation());
         user.setUniversity(request.getUniversity());
         user.setFieldOfStudy(request.getFieldOfStudy());
         user.setStudyYear(request.getStudyYear());
@@ -79,6 +80,7 @@ public class ProfileService {
         res.setLastName(user.getLastName());
         res.setEmail(user.getEmail());
         res.setBio(user.getBio());
+        res.setOccupation(user.getOccupation());
         res.setUniversity(user.getUniversity());
         res.setFieldOfStudy(user.getFieldOfStudy());
         res.setStudyYear(user.getStudyYear());
