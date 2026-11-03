@@ -127,7 +127,6 @@ const getInitialProfile = (): UserProfile => {
             };
         }
     } catch {
-        // ignore parse error
     }
     return EMPTY_PROFILE;
 };
@@ -138,7 +137,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
     const [isSaving, setIsSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-    // Edit Profile Modal State
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [editForm, setEditForm] = useState({
         firstName: "",
@@ -151,7 +149,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         avatarUrl: "",
     });
 
-    // Activity Modal State
     const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
     const [activityForm, setActivityForm] = useState<{
         index: number | null;
@@ -165,10 +162,8 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         category: ACTIVITY_CATEGORIES[0],
     });
 
-    // Custom Tag input
     const [customTagInput, setCustomTagInput] = useState("");
 
-    // Load initial profile data
     useEffect(() => {
         const storedUserId = localStorage.getItem("lifeSwapUserId");
         if (!storedUserId) {
@@ -216,7 +211,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         fetchProfile();
     }, []);
 
-    // Toggle preference tag
     const handleTogglePreference = (tag: string) => {
         setProfile((prev) => {
             const exists = prev.preferences.includes(tag);
@@ -228,7 +222,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setStatusMessage(null);
     };
 
-    // Add custom preference tag
     const handleAddCustomTag = (e: React.FormEvent) => {
         e.preventDefault();
         const trimmed = customTagInput.trim();
@@ -242,7 +235,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setCustomTagInput("");
     };
 
-    // Open Edit Profile Modal
     const handleOpenEditModal = () => {
         setEditForm({
             firstName: profile.firstName,
@@ -257,7 +249,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setIsEditProfileOpen(true);
     };
 
-    // Save Edit Profile Modal
     const handleSaveEditModal = (e: React.FormEvent) => {
         e.preventDefault();
         setProfile((prev) => ({
@@ -274,7 +265,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setIsEditProfileOpen(false);
     };
 
-    // Open Activity Modal (for Add or Edit)
     const handleOpenActivityModal = (index: number | null = null) => {
         if (index !== null && profile.activities[index]) {
             const act = profile.activities[index];
@@ -295,7 +285,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setIsActivityModalOpen(true);
     };
 
-    // Save Activity Modal
     const handleSaveActivityModal = (e: React.FormEvent) => {
         e.preventDefault();
         if (!activityForm.title.trim()) return;
@@ -321,7 +310,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setStatusMessage(null);
     };
 
-    // Delete Activity
     const handleDeleteActivity = (index: number) => {
         setProfile((prev) => ({
             ...prev,
@@ -329,7 +317,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         }));
     };
 
-    // Save Entire Profile to Backend API
     const handleSaveAll = async () => {
         setStatusMessage(null);
 
@@ -416,7 +403,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
 
     return (
         <main className="min-h-screen bg-background text-foreground flex flex-col pb-20">
-            {/* Top Navigation */}
             <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
                 <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
                     <div
@@ -461,7 +447,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             </header>
 
             <div className="mx-auto w-full max-w-5xl px-6 pt-8 space-y-8">
-                {/* Status Feedback Banner */}
                 {statusMessage && (
                     <Alert
                         variant={statusMessage.type === "error" ? "destructive" : "default"}
@@ -477,7 +462,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     </Alert>
                 )}
 
-                {/* Match Readiness Card */}
                 <Card className={`border-2 transition-all ${isReadyForMatching ? "border-green-500/40 bg-green-500/5" : "border-amber-500/40 bg-amber-500/5"}`}>
                     <CardContent className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5">
                         <div className="flex items-center gap-3">
@@ -516,7 +500,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     </CardContent>
                 </Card>
 
-                {/* Profile Hero Header Card */}
                 <Card className="overflow-hidden">
                     <div className="h-28 bg-gradient-to-r from-primary/30 via-primary/10 to-accent" />
                     <CardContent className="relative px-6 pb-6 pt-0">
@@ -554,7 +537,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             </Button>
                         </div>
 
-                        {/* Location & Housing Pills */}
                         <div className="flex flex-wrap items-center gap-2 mb-4 text-xs">
                             <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
                                 <MapPin className="size-3.5 text-primary" />
@@ -570,14 +552,12 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             </div>
                         </div>
 
-                        {/* Bio */}
                         <p className="text-sm leading-relaxed text-muted-foreground bg-muted/30 p-4 rounded-xl border border-border/50">
                             {profile.bio || "No bio provided yet. Tell others what your daily life and routine look like!"}
                         </p>
                     </CardContent>
                 </Card>
 
-                {/* SECTION 1: Matching Preferences */}
                 <Card>
                     <CardHeader className="pb-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -600,7 +580,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     </CardHeader>
 
                     <CardContent className="space-y-6 pt-2">
-                        {/* Selected Preferences Summary Bar */}
                         <div className="p-4 rounded-xl bg-muted/40 border border-border/60">
                             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
                                 Your Active Matching Tags ({profile.preferences.length})
@@ -626,7 +605,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             )}
                         </div>
 
-                        {/* Curated Categories */}
                         <div className="space-y-4">
                             {CURATED_PREFERENCES.map((cat) => (
                                 <div key={cat.category} className="space-y-2">
@@ -657,7 +635,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             ))}
                         </div>
 
-                        {/* Custom Tag Input */}
                         <form onSubmit={handleAddCustomTag} className="flex items-center gap-2 pt-2 border-t border-border">
                             <Input
                                 placeholder="Add a custom interest (e.g. Specialty Coffee, Film Photography)..."
@@ -672,7 +649,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     </CardContent>
                 </Card>
 
-                {/* SECTION 2: Host Activities */}
                 <Card>
                     <CardHeader className="pb-3">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -754,7 +730,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     </CardContent>
                 </Card>
 
-                {/* Bottom Sticky Action Bar */}
                 <div className="sticky bottom-4 z-10 flex items-center justify-between p-4 rounded-2xl bg-card/95 border border-border shadow-xl backdrop-blur-md">
                     <div className="flex items-center gap-2">
                         {isReadyForMatching ? (
@@ -788,7 +763,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 </div>
             </div>
 
-            {/* Modal 1: Edit Profile Info */}
             <Dialog open={isEditProfileOpen} onOpenChange={setIsEditProfileOpen}>
                 <DialogContent className="max-w-lg">
                     <DialogHeader>
@@ -903,7 +877,6 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 </DialogContent>
             </Dialog>
 
-            {/* Modal 2: Add / Edit Host Activity */}
             <Dialog open={isActivityModalOpen} onOpenChange={setIsActivityModalOpen}>
                 <DialogContent className="max-w-md">
                     <DialogHeader>
