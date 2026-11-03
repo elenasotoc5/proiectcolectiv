@@ -132,6 +132,9 @@ components:
         location:
           type: string
           example: "Cluj-Napoca"
+        address:
+          type: string
+          example: "Str. Memorandumului 10, Apt 4"
         housingType:
           type: string
           example: "Entire 1-Bedroom Apartment"
@@ -184,6 +187,9 @@ components:
         location:
           type: string
           example: "Cluj-Napoca"
+        address:
+          type: string
+          example: "Str. Memorandumului 10, Apt 4"
         housingType:
           type: string
           example: "Entire 1-Bedroom Apartment"

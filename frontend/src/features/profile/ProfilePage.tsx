@@ -12,6 +12,7 @@ import {
     User,
     MapPin,
     Home,
+    Building2,
     Sparkles,
     Check,
     X,
@@ -61,6 +62,7 @@ export interface UserProfile {
     fieldOfStudy?: string;
     studyYear?: number | null;
     location: string;
+    address: string;
     housingType: string;
     avatarUrl: string;
     preferences: string[];
@@ -97,6 +99,7 @@ const EMPTY_PROFILE: UserProfile = {
     bio: "",
     occupation: "",
     location: "",
+    address: "",
     housingType: "Entire Apartment",
     avatarUrl: "",
     preferences: [],
@@ -143,6 +146,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         bio: "",
         occupation: "",
         location: "",
+        address: "",
         housingType: "Entire Apartment",
         avatarUrl: "",
     });
@@ -195,6 +199,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         bio: data.bio ?? "",
                         occupation: data.occupation ?? prev.occupation ?? "",
                         location: data.location ?? "",
+                        address: data.address ?? prev.address ?? "",
                         housingType: data.housingType ?? prev.housingType,
                         avatarUrl: data.avatarUrl ?? "",
                         preferences: Array.isArray(data.preferences) ? data.preferences : [],
@@ -245,6 +250,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             bio: profile.bio,
             occupation: profile.occupation || "",
             location: profile.location,
+            address: profile.address || "",
             housingType: profile.housingType || "Entire Apartment",
             avatarUrl: profile.avatarUrl || "",
         });
@@ -261,6 +267,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             bio: editForm.bio.trim(),
             occupation: editForm.occupation.trim(),
             location: editForm.location.trim(),
+            address: editForm.address.trim(),
             housingType: editForm.housingType,
             avatarUrl: editForm.avatarUrl.trim(),
         }));
@@ -350,6 +357,14 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
             return;
         }
 
+        if (!profile.location?.trim() || !profile.housingType?.trim() || !profile.address?.trim()) {
+            setStatusMessage({
+                type: "error",
+                text: "Please provide your city, home address, and housing details before matching.",
+            });
+            return;
+        }
+
         setIsSaving(true);
         try {
             const response = await fetch(`${API_URL}/api/v1/users/${profile.userId}/profile`, {
@@ -362,6 +377,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                     bio: profile.bio,
                     occupation: profile.occupation,
                     location: profile.location,
+                    address: profile.address,
                     housingType: profile.housingType,
                     avatarUrl: profile.avatarUrl,
                     preferences: profile.preferences,
@@ -391,7 +407,12 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
 
     const hasEnoughPreferences = profile.preferences.length >= 3;
     const hasEnoughActivities = profile.activities.length >= 1;
-    const isReadyForMatching = hasEnoughPreferences && hasEnoughActivities;
+    const hasHomeDetails = Boolean(
+        profile.location?.trim() &&
+        profile.housingType?.trim() &&
+        profile.address?.trim()
+    );
+    const isReadyForMatching = hasEnoughPreferences && hasEnoughActivities && hasHomeDetails;
 
     return (
         <main className="min-h-screen bg-background text-foreground flex flex-col pb-20">
@@ -472,13 +493,17 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
                                     {isReadyForMatching
-                                        ? "Your profile has all required preferences and activities for life swap pairing."
-                                        : "Profiles need at least 3 preferences and 1 host activity so we can match you with the right swap partner."}
+                                        ? "Your profile has all required home details, preferences, and activities for life swap pairing."
+                                        : "Profiles need home details (city, address, housing), at least 3 preferences, and 1 host activity to enable matching."}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm font-medium self-end sm:self-center">
+                        <div className="flex flex-wrap items-center gap-2 text-sm font-medium self-end sm:self-center">
+                            <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasHomeDetails ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>
+                                {hasHomeDetails ? <Check className="size-3" /> : <AlertCircle className="size-3" />}
+                                {hasHomeDetails ? "Home Details Set" : "Home Details Missing"}
+                            </span>
                             <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasEnoughPreferences ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>
                                 {hasEnoughPreferences ? <Check className="size-3" /> : <AlertCircle className="size-3" />}
                                 {profile.preferences.length}/3 Preferences
@@ -534,6 +559,10 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                             <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
                                 <MapPin className="size-3.5 text-primary" />
                                 <span>{profile.location || "City not set"}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
+                                <Building2 className="size-3.5 text-primary" />
+                                <span>{profile.address || "Address not set"}</span>
                             </div>
                             <div className="flex items-center gap-1.5 bg-muted px-3 py-1.5 rounded-lg text-muted-foreground">
                                 <Home className="size-3.5 text-primary" />
@@ -736,7 +765,13 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         ) : (
                             <div className="flex items-center gap-2 text-sm text-amber-600 dark:text-amber-400 font-medium">
                                 <AlertCircle className="size-5" />
-                                <span>Needs {profile.preferences.length < 3 ? `${3 - profile.preferences.length} more preference(s)` : ""}{profile.preferences.length < 3 && profile.activities.length < 1 ? " and " : ""}{profile.activities.length < 1 ? "1 activity" : ""}</span>
+                                <span>
+                                    Needs: {[
+                                        !hasHomeDetails ? "home details (city, address, housing)" : null,
+                                        profile.preferences.length < 3 ? `${3 - profile.preferences.length} more preference(s)` : null,
+                                        profile.activities.length < 1 ? "1 activity" : null,
+                                    ].filter(Boolean).join(", ")}
+                                </span>
                             </div>
                         )}
                     </div>
@@ -807,30 +842,43 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label htmlFor="location">City & Country</Label>
+                                <Label htmlFor="location">City & Country <span className="text-destructive">*</span></Label>
                                 <Input
                                     id="location"
                                     placeholder="e.g. Cluj-Napoca, Romania"
                                     value={editForm.location}
                                     onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+                                    required
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
-                            <Label htmlFor="housingType">Housing Arrangement</Label>
-                            <NativeSelect
-                                id="housingType"
-                                value={editForm.housingType}
-                                onChange={(e) => setEditForm({ ...editForm, housingType: e.target.value })}
-                            >
-                                <NativeSelectOption value="Entire Apartment">Entire Apartment</NativeSelectOption>
-                                <NativeSelectOption value="Private Room in Shared Apartment">Private Room in Shared Apartment</NativeSelectOption>
-                                <NativeSelectOption value="Studio Apartment">Studio Apartment</NativeSelectOption>
-                                <NativeSelectOption value="House / Villa">House / Villa</NativeSelectOption>
-                                <NativeSelectOption value="Townhouse / Loft">Townhouse / Loft</NativeSelectOption>
-                                <NativeSelectOption value="Suburban Home with Garden">Suburban Home with Garden</NativeSelectOption>
-                            </NativeSelect>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label htmlFor="address">Home Address / Street <span className="text-destructive">*</span></Label>
+                                <Input
+                                    id="address"
+                                    placeholder="e.g. Strada Memorandumului 21"
+                                    value={editForm.address}
+                                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label htmlFor="housingType">Housing Arrangement <span className="text-destructive">*</span></Label>
+                                <NativeSelect
+                                    id="housingType"
+                                    value={editForm.housingType}
+                                    onChange={(e) => setEditForm({ ...editForm, housingType: e.target.value })}
+                                >
+                                    <NativeSelectOption value="Entire Apartment">Entire Apartment</NativeSelectOption>
+                                    <NativeSelectOption value="Private Room in Shared Apartment">Private Room in Shared Apartment</NativeSelectOption>
+                                    <NativeSelectOption value="Studio Apartment">Studio Apartment</NativeSelectOption>
+                                    <NativeSelectOption value="House / Villa">House / Villa</NativeSelectOption>
+                                    <NativeSelectOption value="Townhouse / Loft">Townhouse / Loft</NativeSelectOption>
+                                    <NativeSelectOption value="Suburban Home with Garden">Suburban Home with Garden</NativeSelectOption>
+                                </NativeSelect>
+                            </div>
                         </div>
 
                         <div className="space-y-1.5">

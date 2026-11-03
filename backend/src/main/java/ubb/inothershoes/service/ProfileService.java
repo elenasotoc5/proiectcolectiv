@@ -46,13 +46,20 @@ public class ProfileService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please provide at least 1 host activity for the swap partner.");
         }
 
+        if (request.getLocation() == null || request.getLocation().trim().isEmpty()
+                || request.getHousingType() == null || request.getHousingType().trim().isEmpty()
+                || request.getAddress() == null || request.getAddress().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please provide your address and home details before matching.");
+        }
+
         user.setBio(request.getBio());
         user.setOccupation(request.getOccupation());
         user.setUniversity(request.getUniversity());
         user.setFieldOfStudy(request.getFieldOfStudy());
         user.setStudyYear(request.getStudyYear());
-        user.setLocation(request.getLocation());
-        user.setHousingType(request.getHousingType());
+        user.setLocation(request.getLocation() != null ? request.getLocation().trim() : null);
+        user.setAddress(request.getAddress() != null ? request.getAddress().trim() : null);
+        user.setHousingType(request.getHousingType() != null ? request.getHousingType().trim() : null);
         user.setAvatarUrl(request.getAvatarUrl());
         user.setPreferences(new LinkedHashSet<>(request.getPreferences()));
         user.setUpdatedAt(OffsetDateTime.now());
@@ -85,6 +92,7 @@ public class ProfileService {
         res.setFieldOfStudy(user.getFieldOfStudy());
         res.setStudyYear(user.getStudyYear());
         res.setLocation(user.getLocation());
+        res.setAddress(user.getAddress());
         res.setHousingType(user.getHousingType());
         res.setAvatarUrl(user.getAvatarUrl());
         res.setPreferences(new ArrayList<>(user.getPreferences()));

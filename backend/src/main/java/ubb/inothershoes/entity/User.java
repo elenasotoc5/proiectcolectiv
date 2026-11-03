@@ -42,6 +42,8 @@ public class User {
 
     private String location;
 
+    private String address;
+
     @Column(name = "housing_type")
     private String housingType;
 
@@ -94,6 +96,9 @@ public class User {
 
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
     public String getHousingType() { return housingType; }
     public void setHousingType(String housingType) { this.housingType = housingType; }
