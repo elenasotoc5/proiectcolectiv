@@ -143,3 +143,58 @@ paths:
             application/json:
               schema:
                 $ref: "./models.yaml#/components/schemas/ErrorResponse"
+
+  /api/v1/homes:
+    post:
+      summary: Create a new home listing
+      operationId: createHome
+      tags:
+        - Homes
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./models.yaml#/components/schemas/CreateHomeRequest"
+      responses:
+        "201":
+          description: Home created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/HomeResponse"
+        "400":
+          description: Invalid home details
+          content:
+            application/json:
+              schema:
+                $ref: "./models.yaml#/components/schemas/ErrorResponse"
+        "401":
+          description: Authentication required
+  /api/v1/homes/mine:
+    get:
+      tags:
+        - Homes
+      operationId: getMyHomes
+      summary: Get homes owned by the authenticated user
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Homes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './models.yaml#/components/schemas/HomeResponse'
+        '401':
+          description: Unauthorized
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
