@@ -91,3 +91,121 @@ components:
           minLength: 1
           maxLength: 72
           example: "SecretPassword123!"
+
+    ActivityDto:
+      type: object
+      required:
+        - title
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        title:
+          type: string
+          example: "Access to campus sports complex & gym"
+        description:
+          type: string
+          example: "I have an active pass, you can join our indoor volleyball team on Tuesdays."
+        category:
+          type: string
+          example: "Sports & Fitness"
+
+    UserProfileRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        bio:
+          type: string
+          example: "Remote software engineer who loves specialty coffee, morning runs, and exploring new neighborhoods."
+        occupation:
+          type: string
+          example: "Software Engineer"
+        university:
+          type: string
+          example: "Babes-Bolyai University"
+        fieldOfStudy:
+          type: string
+          example: "Computer Science"
+        studyYear:
+          type: integer
+          example: 3
+        location:
+          type: string
+          example: "Cluj-Napoca"
+        address:
+          type: string
+          example: "Str. Memorandumului 10, Apt 4"
+        housingType:
+          type: string
+          example: "Entire 1-Bedroom Apartment"
+        avatarUrl:
+          type: string
+          example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
+        preferences:
+          type: array
+          items:
+            type: string
+          example: ["Early Bird", "Coffee Culture", "Remote Worker", "Fitness & Gym"]
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityDto"
+
+    UserProfileResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          example: 1
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        email:
+          type: string
+          example: "john.doe@example.com"
+        bio:
+          type: string
+          example: "Remote software engineer who loves specialty coffee, morning runs, and exploring new neighborhoods."
+        occupation:
+          type: string
+          example: "Software Engineer"
+        university:
+          type: string
+          example: "Babes-Bolyai University"
+        fieldOfStudy:
+          type: string
+          example: "Computer Science"
+        studyYear:
+          type: integer
+          example: 3
+        location:
+          type: string
+          example: "Cluj-Napoca"
+        address:
+          type: string
+          example: "Str. Memorandumului 10, Apt 4"
+        housingType:
+          type: string
+          example: "Entire 1-Bedroom Apartment"
+        avatarUrl:
+          type: string
+          example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
+        preferences:
+          type: array
+          items:
+            type: string
+          example: ["Early Bird", "Coffee Culture", "Remote Worker", "Fitness & Gym"]
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityDto"
