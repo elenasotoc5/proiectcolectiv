@@ -50,6 +50,10 @@ public class ProfileService {
             user.setLastName(request.getLastName().trim());
         }
 
+        if (request.getGender() != null) {
+            user.setGender(request.getGender().getValue());
+        }
+
         user.setBio(request.getBio());
         user.setOccupation(request.getOccupation());
         user.setUniversity(request.getUniversity());
@@ -93,6 +97,9 @@ public class ProfileService {
         res.setUserId(user.getId());
         res.setFirstName(user.getFirstName());
         res.setLastName(user.getLastName());
+        if (user.getGender() != null) {
+            res.setGender(UserProfileResponse.GenderEnum.fromValue(user.getGender()));
+        }
         res.setEmail(user.getEmail());
         res.setBio(user.getBio());
         res.setOccupation(user.getOccupation());
