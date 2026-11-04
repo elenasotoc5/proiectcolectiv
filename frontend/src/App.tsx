@@ -1,9 +1,10 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import HomePage from "@/features/homepage/HomePage";
 import RegisterPage from "@/features/auth/RegisterPage";
 import LoginPage from "@/features/auth/LoginPage";
 import ProfilePage from "@/features/profile/ProfilePage";
+import AddHomePage from "@/features/home/AddHomePage";
 import DashboardSidebar, {
     type DashboardView,
 } from "@/components/layout/DashboardSidebar";
@@ -13,11 +14,35 @@ type AppView = "home" | "login" | "register" | DashboardView;
 
 function App() {
     const [currentView, setCurrentView] = useState<AppView>(() => {
-        return isUserAuthenticated() ? "dashboard" : "home";
+        if (!isUserAuthenticated()) {
+            return "home";
+        }
+
+        const savedView = sessionStorage.getItem("currentView");
+
+        const validViews: AppView[] = [
+            "home",
+            "dashboard",
+            "explore",
+            "matches",
+            "my-home",
+            "profile",
+        ];
+
+        if (savedView && validViews.includes(savedView as AppView)) {
+            return savedView as AppView;
+        }
+
+        return "dashboard";
     });
+
+    useEffect(() => {
+        sessionStorage.setItem("currentView", currentView);
+    }, [currentView]);
 
     const handleLogout = () => {
         clearStoredAuth();
+        sessionStorage.removeItem("currentView");
         setCurrentView("home");
     };
 
@@ -93,6 +118,8 @@ function App() {
                     <ProfilePage
                         onLogout={handleLogout}
                     />
+                ) : currentView === "my-home" ? (
+                    <AddHomePage />
                 ) : (
                     <main className="px-6 py-20 md:p-8">
                         <h1 className="text-3xl font-bold">

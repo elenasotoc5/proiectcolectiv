@@ -221,3 +221,68 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActivityDto"
+
+    CreateHomeRequest:
+      type: object
+      required:
+        - title
+        - city
+        - address
+        - description
+        - housingType
+        - guestCapacity
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 255
+        city:
+          type: string
+          minLength: 1
+          maxLength: 255
+        address:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          minLength: 1
+        housingType:
+          type: string
+          minLength: 1
+        guestCapacity:
+          type: integer
+          minimum: 1
+        amenities:
+          type: array
+          items:
+            type: string
+
+    HomeResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        ownerId:
+          type: integer
+          format: int64
+        title:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        description:
+          type: string
+        housingType:
+          type: string
+        guestCapacity:
+          type: integer
+        amenities:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
