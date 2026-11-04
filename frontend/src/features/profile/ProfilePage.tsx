@@ -1,7 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-    House,
-    ArrowLeft,
     CheckCircle2,
     AlertCircle,
     Loader2,
@@ -70,7 +68,6 @@ export interface UserProfile {
 }
 
 interface ProfilePageProps {
-    onNavigateBack: () => void;
     onLogout?: () => void;
 }
 
@@ -131,9 +128,9 @@ const getInitialProfile = (): UserProfile => {
     return EMPTY_PROFILE;
 };
 
-export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePageProps) {
+export default function ProfilePage({ onLogout }: ProfilePageProps) {
     const [profile, setProfile] = useState<UserProfile>(getInitialProfile);
-    const [isLoading, setIsLoading] = useState(false);
+    const [, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isUpdatingInfo, setIsUpdatingInfo] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -498,53 +495,33 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
     );
     const isReadyForMatching = hasEnoughPreferences && hasEnoughActivities && hasHomeDetails;
 
+
     return (
-        <main className="min-h-screen bg-background text-foreground flex flex-col pb-20">
-            <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur-md">
-                <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-                    <div
-                        className="flex items-center gap-2 cursor-pointer"
-                        onClick={onNavigateBack}
+        <main className="min-h-screen bg-background text-foreground pb-20">
+            <header className="border-b border-border bg-background">
+                <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-5">
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        My Profile
+                    </h1>
+
+                    <Button
+                        onClick={handleSaveAll}
+                        disabled={isSaving}
+                        className="gap-2"
                     >
-                        <House className="size-6 text-primary" />
-                        <span className="text-xl font-bold tracking-tight">LifeSwap</span>
-                        <Badge variant="outline" className="ml-2 text-xs font-normal flex items-center gap-1">
-                            Profile {isLoading && <Loader2 className="size-3 animate-spin" />}
-                        </Badge>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={onNavigateBack}
-                            className="gap-2"
-                        >
-                            <ArrowLeft className="size-4" /> Home
-                        </Button>
-                        <Button
-                            size="sm"
-                            onClick={handleSaveAll}
-                            disabled={isSaving}
-                            className="gap-2 font-medium"
-                        >
-                            {isSaving ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-                            Save Profile
-                        </Button>
-                        {onLogout && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={onLogout}
-                            >
-                                Log Out
-                            </Button>
+                        {isSaving ? (
+                            <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                            <CheckCircle2 className="size-4" />
                         )}
-                    </div>
+                        Save Profile
+                    </Button>
                 </div>
             </header>
 
             <div className="mx-auto w-full max-w-5xl px-6 pt-8 space-y-8">
-                {statusMessage && (
+
+            {statusMessage && (
                     <Alert
                         variant={statusMessage.type === "error" ? "destructive" : "default"}
                         className={statusMessage.type === "success" ? "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-300" : ""}
