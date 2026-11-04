@@ -120,6 +120,12 @@ components:
         lastName:
           type: string
           example: "Doe"
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+          example: "Female"
         bio:
           type: string
           example: "Remote software engineer who loves specialty coffee, morning runs, and exploring new neighborhoods."
@@ -170,6 +176,12 @@ components:
         lastName:
           type: string
           example: "Doe"
+        gender:
+          type: string
+          enum:
+            - Male
+            - Female
+          example: "Female"
         email:
           type: string
           example: "john.doe@example.com"

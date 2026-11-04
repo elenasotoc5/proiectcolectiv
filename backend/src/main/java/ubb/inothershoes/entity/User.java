@@ -27,6 +27,9 @@ public class User {
     @Column(name = "last_name")
     private String lastName;
 
+    @Column(name = "gender")
+    private String gender;
+
     @Column(columnDefinition = "TEXT")
     private String bio;
 
@@ -78,6 +81,9 @@ public class User {
 
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }

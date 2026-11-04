@@ -21,6 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -55,6 +56,7 @@ export interface UserProfile {
     userId: number;
     firstName: string;
     lastName: string;
+    gender: "Male" | "Female" | null;
     email: string;
     bio: string;
     occupation: string;
@@ -95,6 +97,7 @@ const EMPTY_PROFILE: UserProfile = {
     userId: 0,
     firstName: "",
     lastName: "",
+    gender: null,
     email: "",
     bio: "",
     occupation: "",
@@ -142,6 +145,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
     const [editForm, setEditForm] = useState({
         firstName: "",
         lastName: "",
+        gender: null as "Male" | "Female" | null,
         bio: "",
         occupation: "",
         location: "",
@@ -191,6 +195,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         userId: data.userId || userIdNum,
                         firstName: data.firstName ?? prev.firstName,
                         lastName: data.lastName ?? prev.lastName,
+                        gender: data.gender ?? null,
                         email: data.email ?? prev.email,
                         bio: data.bio ?? "",
                         occupation: data.occupation ?? prev.occupation ?? "",
@@ -240,6 +245,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setEditForm({
             firstName: profile.firstName,
             lastName: profile.lastName,
+            gender: profile.gender,
             bio: profile.bio,
             occupation: profile.occupation || "",
             location: profile.location,
@@ -264,6 +270,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
 
         const newFirstName = editForm.firstName.trim() || profile.firstName;
         const newLastName = editForm.lastName.trim() || profile.lastName;
+        const newGender = editForm.gender;
         const newBio = editForm.bio.trim();
         const newOccupation = editForm.occupation.trim();
         const newLocation = editForm.location.trim();
@@ -284,6 +291,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 body: JSON.stringify({
                     firstName: newFirstName,
                     lastName: newLastName,
+                    gender: newGender,
                     bio: newBio,
                     occupation: newOccupation,
                     location: newLocation,
@@ -325,6 +333,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 userId: data?.userId || userId,
                 firstName: data?.firstName ?? newFirstName,
                 lastName: data?.lastName ?? newLastName,
+                gender: data?.gender ?? newGender,
                 bio: data?.bio ?? newBio,
                 occupation: data?.occupation ?? newOccupation,
                 location: data?.location ?? newLocation,
@@ -450,6 +459,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                 body: JSON.stringify({
                     firstName: profile.firstName,
                     lastName: profile.lastName,
+                    gender: profile.gender,
                     bio: profile.bio,
                     occupation: profile.occupation,
                     location: profile.location,
@@ -617,10 +627,18 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                             ? `${profile.firstName} ${profile.lastName}`.trim()
                                             : "Your Profile"}
                                     </h2>
+
                                     <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
                                         <Briefcase className="size-4 text-primary" />
                                         <span>{profile.occupation || "Profession / Occupation not set"}</span>
                                     </p>
+
+                                    {profile.gender && (
+                                        <p className="text-sm text-muted-foreground mt-1">
+                                            Gender: {profile.gender}
+                                        </p>
+                                    )}
+
                                 </div>
                             </div>
 
@@ -912,6 +930,33 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                                 />
                             </div>
                         </div>
+
+
+                        <div className="space-y-2">
+                            <Label>Gender</Label>
+
+                            <RadioGroup
+                                value={editForm.gender ?? ""}
+                                onValueChange={(value) =>
+                                    setEditForm({
+                                        ...editForm,
+                                        gender: value as "Male" | "Female",
+                                    })
+                                }
+                                className="flex gap-6"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <RadioGroupItem value="Male" id="gender-male" />
+                                    <Label htmlFor="gender-male">Male</Label>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <RadioGroupItem value="Female" id="gender-female" />
+                                    <Label htmlFor="gender-female">Female</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+
 
                         <div className="space-y-1.5">
                             <Label htmlFor="bio">About Me & Daily Routine</Label>
