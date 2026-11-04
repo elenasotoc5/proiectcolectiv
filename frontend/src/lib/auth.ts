@@ -9,7 +9,6 @@ export function getStoredAccessToken(): string | null {
 
 export function setStoredAccessToken(token: string): void {
     localStorage.setItem(TOKEN_KEY, token);
-    // Ensure any legacy accessToken key is cleaned up so only 'token' remains
     localStorage.removeItem("accessToken");
 }
 
@@ -23,6 +22,33 @@ export function clearStoredAuth(): void {
 export function getAuthHeaders(): Record<string, string> {
     const token = getStoredAccessToken();
     return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function getStoredUserId(): number | null {
+    const stored = localStorage.getItem(USER_ID_KEY);
+    if (stored) {
+        const id = parseInt(stored, 10);
+        if (!isNaN(id) && id > 0) {
+            return id;
+        }
+    }
+
+    const token = getStoredAccessToken();
+    if (token) {
+        try {
+            const parts = token.split(".");
+            if (parts.length === 3) {
+                const payloadStr = atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"));
+                const payload = JSON.parse(payloadStr);
+                const id = payload.userId ?? payload.id;
+                if (id) {
+                    return Number(id);
+                }
+            }
+        } catch {}
+    }
+
+    return null;
 }
 
 export function isUserAuthenticated(): boolean {

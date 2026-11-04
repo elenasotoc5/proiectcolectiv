@@ -43,18 +43,11 @@ public class ProfileService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with id: " + userId));
 
-        if (request.getPreferences() == null || request.getPreferences().size() < 3) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please add at least 3 preferences for matching.");
+        if (request.getFirstName() != null && !request.getFirstName().trim().isEmpty()) {
+            user.setFirstName(request.getFirstName().trim());
         }
-
-        if (request.getActivities() == null || request.getActivities().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please provide at least 1 host activity for the swap partner.");
-        }
-
-        if (request.getLocation() == null || request.getLocation().trim().isEmpty()
-                || request.getHousingType() == null || request.getHousingType().trim().isEmpty()
-                || request.getAddress() == null || request.getAddress().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Please provide your address and home details before matching.");
+        if (request.getLastName() != null && !request.getLastName().trim().isEmpty()) {
+            user.setLastName(request.getLastName().trim());
         }
 
         user.setBio(request.getBio());
@@ -62,22 +55,32 @@ public class ProfileService {
         user.setUniversity(request.getUniversity());
         user.setFieldOfStudy(request.getFieldOfStudy());
         user.setStudyYear(request.getStudyYear());
-        user.setLocation(request.getLocation() != null ? request.getLocation().trim() : null);
-        user.setAddress(request.getAddress() != null ? request.getAddress().trim() : null);
-        user.setHousingType(request.getHousingType() != null ? request.getHousingType().trim() : null);
+        if (request.getLocation() != null) {
+            user.setLocation(request.getLocation().trim());
+        }
+        if (request.getAddress() != null) {
+            user.setAddress(request.getAddress().trim());
+        }
+        if (request.getHousingType() != null) {
+            user.setHousingType(request.getHousingType().trim());
+        }
         user.setAvatarUrl(request.getAvatarUrl());
-        user.setPreferences(new LinkedHashSet<>(request.getPreferences()));
+        if (request.getPreferences() != null) {
+            user.setPreferences(new LinkedHashSet<>(request.getPreferences()));
+        }
         user.setUpdatedAt(OffsetDateTime.now());
 
-        user.getActivities().clear();
-        for (ActivityDto dto : request.getActivities()) {
-            if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
-                user.getActivities().add(new Activity(
-                        user,
-                        dto.getTitle().trim(),
-                        dto.getDescription() != null ? dto.getDescription().trim() : "",
-                        dto.getCategory() != null ? dto.getCategory().trim() : "General"
-                ));
+        if (request.getActivities() != null) {
+            user.getActivities().clear();
+            for (ActivityDto dto : request.getActivities()) {
+                if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
+                    user.getActivities().add(new Activity(
+                            user,
+                            dto.getTitle().trim(),
+                            dto.getDescription() != null ? dto.getDescription().trim() : "",
+                            dto.getCategory() != null ? dto.getCategory().trim() : "General"
+                    ));
+                }
             }
         }
 

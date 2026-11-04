@@ -30,7 +30,7 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { getAuthHeaders, clearStoredAuth } from "@/lib/auth";
+import { getAuthHeaders, clearStoredAuth, getStoredUserId } from "@/lib/auth";
 import {
     Dialog,
     DialogContent,
@@ -109,12 +109,12 @@ const EMPTY_PROFILE: UserProfile = {
 const getInitialProfile = (): UserProfile => {
     try {
         const storedUser = localStorage.getItem("lifeSwapUser");
-        const storedUserId = localStorage.getItem("lifeSwapUserId");
+        const storedUserId = getStoredUserId();
         if (storedUser) {
             const parsed = JSON.parse(storedUser);
             return {
                 ...EMPTY_PROFILE,
-                userId: parsed.id || (storedUserId ? parseInt(storedUserId, 10) : 0),
+                userId: parsed.id || storedUserId || 0,
                 firstName: parsed.firstName || "",
                 lastName: parsed.lastName || "",
                 email: parsed.email || "",
@@ -123,7 +123,7 @@ const getInitialProfile = (): UserProfile => {
         if (storedUserId) {
             return {
                 ...EMPTY_PROFILE,
-                userId: parseInt(storedUserId, 10) || 0,
+                userId: storedUserId,
             };
         }
     } catch {
@@ -135,6 +135,7 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
     const [profile, setProfile] = useState<UserProfile>(getInitialProfile);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [isUpdatingInfo, setIsUpdatingInfo] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -165,13 +166,8 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
     const [customTagInput, setCustomTagInput] = useState("");
 
     useEffect(() => {
-        const storedUserId = localStorage.getItem("lifeSwapUserId");
-        if (!storedUserId) {
-            return;
-        }
-
-        const userIdNum = parseInt(storedUserId, 10);
-        if (isNaN(userIdNum) || userIdNum <= 0) {
+        const userIdNum = profile.userId || getStoredUserId();
+        if (!userIdNum || userIdNum <= 0) {
             return;
         }
 
@@ -254,20 +250,105 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
         setIsEditProfileOpen(true);
     };
 
-    const handleSaveEditModal = (e: React.FormEvent) => {
+    const handleSaveEditModal = async (e: React.FormEvent) => {
         e.preventDefault();
-        setProfile((prev) => ({
-            ...prev,
-            firstName: editForm.firstName.trim() || prev.firstName,
-            lastName: editForm.lastName.trim() || prev.lastName,
-            bio: editForm.bio.trim(),
-            occupation: editForm.occupation.trim(),
-            location: editForm.location.trim(),
-            address: editForm.address.trim(),
-            housingType: editForm.housingType,
-            avatarUrl: editForm.avatarUrl.trim(),
-        }));
-        setIsEditProfileOpen(false);
+
+        const userId = profile.userId || getStoredUserId();
+        if (!userId) {
+            setStatusMessage({
+                type: "error",
+                text: "Please register or log in before saving your profile.",
+            });
+            return;
+        }
+
+        const newFirstName = editForm.firstName.trim() || profile.firstName;
+        const newLastName = editForm.lastName.trim() || profile.lastName;
+        const newBio = editForm.bio.trim();
+        const newOccupation = editForm.occupation.trim();
+        const newLocation = editForm.location.trim();
+        const newAddress = editForm.address.trim();
+        const newHousingType = editForm.housingType;
+        const newAvatarUrl = editForm.avatarUrl.trim();
+
+        setIsUpdatingInfo(true);
+        setStatusMessage(null);
+
+        try {
+            const response = await fetch(`${API_URL}/api/v1/users/${userId}/profile`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders(),
+                },
+                body: JSON.stringify({
+                    firstName: newFirstName,
+                    lastName: newLastName,
+                    bio: newBio,
+                    occupation: newOccupation,
+                    location: newLocation,
+                    address: newAddress,
+                    housingType: newHousingType,
+                    avatarUrl: newAvatarUrl,
+                    preferences: profile.preferences,
+                    activities: profile.activities,
+                }),
+            });
+
+            if (response.status === 401) {
+                clearStoredAuth();
+                onLogout?.();
+                return;
+            }
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => null);
+                throw new Error(errData?.message || "Failed to update profile info.");
+            }
+
+            const data = await response.json().catch(() => null);
+
+            try {
+                const storedUser = localStorage.getItem("lifeSwapUser");
+                if (storedUser) {
+                    const parsed = JSON.parse(storedUser);
+                    localStorage.setItem("lifeSwapUser", JSON.stringify({
+                        ...parsed,
+                        firstName: newFirstName,
+                        lastName: newLastName,
+                    }));
+                }
+            } catch {}
+
+            setProfile((prev) => ({
+                ...prev,
+                userId: data?.userId || userId,
+                firstName: data?.firstName ?? newFirstName,
+                lastName: data?.lastName ?? newLastName,
+                bio: data?.bio ?? newBio,
+                occupation: data?.occupation ?? newOccupation,
+                location: data?.location ?? newLocation,
+                address: data?.address ?? newAddress,
+                housingType: data?.housingType ?? newHousingType,
+                avatarUrl: data?.avatarUrl ?? newAvatarUrl,
+                preferences: Array.isArray(data?.preferences) ? data.preferences : prev.preferences,
+                activities: Array.isArray(data?.activities) ? data.activities : prev.activities,
+            }));
+
+            setStatusMessage({
+                type: "success",
+                text: "Profile info updated successfully!",
+            });
+            setIsEditProfileOpen(false);
+        } catch (err: unknown) {
+            const errorMsg = err instanceof Error ? err.message : "Could not connect to backend server.";
+            setStatusMessage({
+                type: "error",
+                text: errorMsg,
+            });
+        } finally {
+            setIsUpdatingInfo(false);
+        }
     };
 
     const handleOpenActivityModal = (index: number | null = null) => {
@@ -325,7 +406,8 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
     const handleSaveAll = async () => {
         setStatusMessage(null);
 
-        if (!profile.userId) {
+        const userId = profile.userId || getStoredUserId();
+        if (!userId) {
             setStatusMessage({
                 type: "error",
                 text: "Please register or log in before saving your profile.",
@@ -359,13 +441,15 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
 
         setIsSaving(true);
         try {
-            const response = await fetch(`${API_URL}/api/v1/users/${profile.userId}/profile`, {
+            const response = await fetch(`${API_URL}/api/v1/users/${userId}/profile`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     ...getAuthHeaders(),
                 },
                 body: JSON.stringify({
+                    firstName: profile.firstName,
+                    lastName: profile.lastName,
                     bio: profile.bio,
                     occupation: profile.occupation,
                     location: profile.location,
@@ -913,10 +997,11 @@ export default function ProfilePage({ onNavigateBack, onLogout }: ProfilePagePro
                         </div>
 
                         <DialogFooter className="pt-2">
-                            <Button type="button" variant="outline" onClick={() => setIsEditProfileOpen(false)}>
+                            <Button type="button" variant="outline" onClick={() => setIsEditProfileOpen(false)} disabled={isUpdatingInfo}>
                                 Cancel
                             </Button>
-                            <Button type="submit">
+                            <Button type="submit" disabled={isUpdatingInfo} className="gap-2">
+                                {isUpdatingInfo && <Loader2 className="size-4 animate-spin" />}
                                 Update Info
                             </Button>
                         </DialogFooter>
