@@ -41,6 +41,9 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS: ${DB_PASS}
+      HOME_UPLOAD_DIR: /app/uploads
+    volumes:
+      - home_photos:/app/uploads
     networks:
       - backend-network
       - frontend-network
@@ -69,3 +72,4 @@ networks:
 
 volumes:
   postgres_data:
+  home_photos:
