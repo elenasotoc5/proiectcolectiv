@@ -11,105 +11,194 @@ import java.util.Set;
 @Table(name = "users")
 public class User {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+  @Column(nullable = false, unique = true)
+  private String email;
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+  @Column(name = "password_hash", nullable = false)
+  private String passwordHash;
 
-    @Column(name = "first_name")
-    private String firstName;
+  @Column(name = "first_name")
+  private String firstName;
 
-    @Column(name = "last_name")
-    private String lastName;
+  @Column(name = "last_name")
+  private String lastName;
 
-    @Column(name = "gender")
-    private String gender;
+  @Column(name = "gender")
+  private String gender;
 
-    @Column(columnDefinition = "TEXT")
-    private String bio;
+  @Column(columnDefinition = "TEXT")
+  private String bio;
 
-    private String occupation;
+  private String occupation;
 
-    private String university;
+  private String university;
 
-    @Column(name = "field_of_study")
-    private String fieldOfStudy;
+  @Column(name = "field_of_study")
+  private String fieldOfStudy;
 
-    @Column(name = "study_year")
-    private Integer studyYear;
+  @Column(name = "study_year")
+  private Integer studyYear;
 
-    private String location;
+  private String location;
 
-    @Column(name = "avatar_url")
-    private String avatarUrl;
+  @Column(name = "avatar_url")
+  private String avatarUrl;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "preference")
-    private Set<String> preferences = new LinkedHashSet<>();
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "preference")
+  private Set<String> preferences = new LinkedHashSet<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<Activity> activities = new ArrayList<>();
+  @OneToMany(
+      mappedBy = "user",
+      cascade = CascadeType.ALL,
+      orphanRemoval = true,
+      fetch = FetchType.EAGER)
+  private List<Activity> activities = new ArrayList<>();
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private OffsetDateTime createdAt = OffsetDateTime.now();
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private OffsetDateTime createdAt = OffsetDateTime.now();
 
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt = OffsetDateTime.now();
+  @Column(name = "updated_at", nullable = false)
+  private OffsetDateTime updatedAt = OffsetDateTime.now();
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  public Long getId() {
+    return id;
+  }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+  public void setId(Long id) {
+    this.id = id;
+  }
 
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+  public String getEmail() {
+    return email;
+  }
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
+  public void setEmail(String email) {
+    this.email = email;
+  }
 
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
+  public String getPasswordHash() {
+    return passwordHash;
+  }
 
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
+  public void setPasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+  public String getFirstName() {
+    return firstName;
+  }
 
-    public String getOccupation() { return occupation; }
-    public void setOccupation(String occupation) { this.occupation = occupation; }
+  public void setFirstName(String firstName) {
+    this.firstName = firstName;
+  }
 
-    public String getUniversity() { return university; }
-    public void setUniversity(String university) { this.university = university; }
+  public String getLastName() {
+    return lastName;
+  }
 
-    public String getFieldOfStudy() { return fieldOfStudy; }
-    public void setFieldOfStudy(String fieldOfStudy) { this.fieldOfStudy = fieldOfStudy; }
+  public void setLastName(String lastName) {
+    this.lastName = lastName;
+  }
 
-    public Integer getStudyYear() { return studyYear; }
-    public void setStudyYear(Integer studyYear) { this.studyYear = studyYear; }
+  public String getGender() {
+    return gender;
+  }
 
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
+  public void setGender(String gender) {
+    this.gender = gender;
+  }
 
-    public String getAvatarUrl() { return avatarUrl; }
-    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+  public String getBio() {
+    return bio;
+  }
 
-    public Set<String> getPreferences() { return preferences; }
-    public void setPreferences(Set<String> preferences) { this.preferences = preferences; }
+  public void setBio(String bio) {
+    this.bio = bio;
+  }
 
-    public List<Activity> getActivities() { return activities; }
-    public void setActivities(List<Activity> activities) { this.activities = activities; }
+  public String getOccupation() {
+    return occupation;
+  }
 
-    public OffsetDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+  public void setOccupation(String occupation) {
+    this.occupation = occupation;
+  }
 
-    public OffsetDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+  public String getUniversity() {
+    return university;
+  }
+
+  public void setUniversity(String university) {
+    this.university = university;
+  }
+
+  public String getFieldOfStudy() {
+    return fieldOfStudy;
+  }
+
+  public void setFieldOfStudy(String fieldOfStudy) {
+    this.fieldOfStudy = fieldOfStudy;
+  }
+
+  public Integer getStudyYear() {
+    return studyYear;
+  }
+
+  public void setStudyYear(Integer studyYear) {
+    this.studyYear = studyYear;
+  }
+
+  public String getLocation() {
+    return location;
+  }
+
+  public void setLocation(String location) {
+    this.location = location;
+  }
+
+  public String getAvatarUrl() {
+    return avatarUrl;
+  }
+
+  public void setAvatarUrl(String avatarUrl) {
+    this.avatarUrl = avatarUrl;
+  }
+
+  public Set<String> getPreferences() {
+    return preferences;
+  }
+
+  public void setPreferences(Set<String> preferences) {
+    this.preferences = preferences;
+  }
+
+  public List<Activity> getActivities() {
+    return activities;
+  }
+
+  public void setActivities(List<Activity> activities) {
+    this.activities = activities;
+  }
+
+  public OffsetDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(OffsetDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public OffsetDateTime getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(OffsetDateTime updatedAt) {
+    this.updatedAt = updatedAt;
+  }
 }

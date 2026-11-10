@@ -28,6 +28,9 @@ Use this approach if you prefer running the backend natively on your machine dur
 **Development Commands (Optional):**
 - **`make generate`** — Generates Java classes from the OpenAPI spec only. Use this when you modify `openapi.yaml` and want your IDE (VS Code/IntelliJ) to recognize the new classes without waiting for a full project compilation.
 - **`make compile`** — Generates OpenAPI code and compiles the Java project. Use this to quickly check for compilation errors before running the application.
+- **`make get-linter`** — Downloads the Java linter (`google-java-format`) into `bin/linter`.
+- **`make lint`** — Checks Java source files and reports any linting/formatting issues.
+- **`make lint-fix`** — Automatically fixes linting/formatting issues in Java source files.
 
 ### Test the Server
 Once the server is running (via Docker or locally), test the health endpoint:
