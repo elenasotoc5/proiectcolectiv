@@ -29,7 +29,7 @@ components:
           type: string
           format: email
           maxLength: 255
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         password:
           type: string
           format: password
@@ -52,7 +52,7 @@ components:
           example: "Doe"
         email:
           type: string
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         accessToken:
           type: string
           example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -84,7 +84,7 @@ components:
           type: string
           format: email
           maxLength: 255
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         password:
           type: string
           format: password
@@ -178,7 +178,7 @@ components:
           example: "Female"
         email:
           type: string
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         bio:
           type: string
           example: "Remote software engineer who loves specialty coffee, morning runs, and exploring new neighborhoods."
