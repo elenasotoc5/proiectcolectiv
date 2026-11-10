@@ -44,7 +44,7 @@ public class HomePhotoService {
     public HomePhotoService(
             HomePhotoRepository photoRepository,
             HomeRepository homeRepository,
-            @Value("${HOME_UPLOAD_DIR:/app/uploads}") String uploadDir
+            @Value("${home.upload.dir:${HOME_UPLOAD_DIR:uploads}}") String uploadDir
     ) {
         this.photoRepository = photoRepository;
         this.homeRepository = homeRepository;
@@ -177,19 +177,29 @@ public class HomePhotoService {
             );
         }
 
+        String fileName = photo.getFileName();
         photoRepository.delete(photo);
         photoRepository.flush();
 
-        try {
-            Files.deleteIfExists(
-                    uploadDirectory.resolve(photo.getFileName())
+        List<HomePhoto> remaining = photoRepository
+                .findByHomeIdOrderByDisplayOrderAscIdAsc(homeId);
+        for (int i = 0; i < remaining.size(); i++) {
+            remaining.get(i).setDisplayOrder(i);
+        }
+        photoRepository.saveAll(remaining);
+
+        if (TransactionSynchronizationManager.isActualTransactionActive()
+                && TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            deleteFileQuietly(fileName);
+                        }
+                    }
             );
-        } catch (IOException e) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    "Could not delete image",
-                    e
-            );
+        } else {
+            deleteFileQuietly(fileName);
         }
     }
 
@@ -253,9 +263,13 @@ public class HomePhotoService {
 
 
     @Transactional(readOnly = true)
-    public Resource getPhotoImage(Long homeId, Long photoId) {
-
-        HomePhoto photo = getPhotoById(homeId, photoId);
+    public Resource getPhotoImage(HomePhoto photo) {
+        if (photo == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Photo not found"
+            );
+        }
 
         Path imagePath = uploadDirectory
                 .resolve(photo.getFileName())
@@ -286,6 +300,12 @@ public class HomePhotoService {
                     e
             );
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Resource getPhotoImage(Long homeId, Long photoId) {
+        HomePhoto photo = getPhotoById(homeId, photoId);
+        return getPhotoImage(photo);
     }
 
     @Transactional(readOnly = true)
@@ -367,26 +387,28 @@ public class HomePhotoService {
                     @Override
                     public void afterCommit() {
                         for (String fileName : fileNames) {
-                            Path path = uploadDirectory
-                                    .resolve(fileName)
-                                    .normalize();
-
-                            if (!path.startsWith(uploadDirectory)) {
-                                LOGGER.warning("Invalid photo path: " + fileName);
-                                continue;
-                            }
-
-                            try {
-                                Files.deleteIfExists(path);
-                            } catch (IOException e) {
-                                LOGGER.warning(
-                                        "Could not delete photo: " + fileName
-                                );
-                            }
+                            deleteFileQuietly(fileName);
                         }
                     }
                 }
         );
+    }
+
+    private void deleteFileQuietly(String fileName) {
+        Path path = uploadDirectory
+                .resolve(fileName)
+                .normalize();
+
+        if (!path.startsWith(uploadDirectory)) {
+            LOGGER.warning("Invalid photo path: " + fileName);
+            return;
+        }
+
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            LOGGER.warning("Could not delete photo: " + fileName);
+        }
     }
 
 

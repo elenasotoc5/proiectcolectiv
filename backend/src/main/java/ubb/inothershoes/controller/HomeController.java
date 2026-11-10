@@ -2,6 +2,7 @@
 package ubb.inothershoes.controller;
 
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -123,10 +124,11 @@ public class HomeController implements HomesApi {
             Long photoId
     ) {
         HomePhoto photo = homePhotoService.getPhotoById(homeId, photoId);
-        Resource image = homePhotoService.getPhotoImage(homeId, photoId);
+        Resource image = homePhotoService.getPhotoImage(photo);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(photo.getContentType()))
+                .header(HttpHeaders.CACHE_CONTROL, "max-age=86400, public")
                 .body(image);
     }
 

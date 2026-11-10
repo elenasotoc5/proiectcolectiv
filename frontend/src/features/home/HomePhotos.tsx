@@ -15,8 +15,8 @@ interface HomePhoto {
     displayOrder: number;
 }
 
-interface DisplayPhoto extends HomePhoto {
-    blobUrl: string;
+export interface DisplayPhoto extends HomePhoto {
+    imageUrl: string;
 }
 
 export async function uploadHomePhotos(homeId: number, files: File[]): Promise<void> {
@@ -35,19 +35,13 @@ export async function uploadHomePhotos(homeId: number, files: File[]): Promise<v
     }
 }
 
-function useHomePhotos(homeId: number | null, version = 0) {
+export function useHomePhotos(homeId: number, version = 0) {
     const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
-    const [loading, setLoading] = useState(homeId !== null);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
     useEffect(() => {
-        if (homeId === null) {
-            setPhotos([]);
-            setLoading(false);
-            return;
-        }
         const controller = new AbortController();
-        const urls: string[] = [];
         setLoading(true);
         setError("");
 
@@ -59,29 +53,27 @@ function useHomePhotos(homeId: number | null, version = 0) {
                 });
                 if (!response.ok) throw new Error(`Failed to load photos (${response.status}).`);
                 const records: HomePhoto[] = await response.json();
-                const ordered = [...records].sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id);
-                const loaded = await Promise.all(ordered.map(async (photo) => {
-                    const imageResponse = await fetch(`${API_URL}${photo.url}`, {
-                        headers: getAuthHeaders(),
-                        signal: controller.signal,
-                    });
-                    if (!imageResponse.ok) throw new Error(`Failed to load an image (${imageResponse.status}).`);
-                    const blobUrl = URL.createObjectURL(await imageResponse.blob());
-                    urls.push(blobUrl);
-                    return { ...photo, blobUrl };
-                }));
-                if (!controller.signal.aborted) setPhotos(loaded);
+                const ordered = [...records]
+                    .sort((a, b) => a.displayOrder - b.displayOrder || a.id - b.id)
+                    .map((photo) => ({
+                        ...photo,
+                        imageUrl: `${API_URL}${photo.url}`,
+                    }));
+                if (!controller.signal.aborted) {
+                    setPhotos(ordered);
+                }
             } catch (err) {
-                if (!controller.signal.aborted) setError(err instanceof Error ? err.message : "Could not load photos.");
+                if (!controller.signal.aborted) {
+                    setError(err instanceof Error ? err.message : "Could not load photos.");
+                }
             } finally {
-                if (!controller.signal.aborted) setLoading(false);
+                if (!controller.signal.aborted) {
+                    setLoading(false);
+                }
             }
         };
         void load();
-        return () => {
-            controller.abort();
-            urls.forEach((url) => URL.revokeObjectURL(url));
-        };
+        return () => controller.abort();
     }, [homeId, version]);
 
     return { photos, loading, error };
@@ -94,15 +86,44 @@ interface PhotoPickerProps {
     disabled?: boolean;
 }
 
-export function PhotoPicker({ files, onChange, existingCount = 0, disabled = false }: PhotoPickerProps) {
-    const [previews, setPreviews] = useState<string[]>([]);
-    const [error, setError] = useState("");
+function PhotoPreviewItem({
+    file,
+    index,
+    onRemove,
+    disabled,
+}: {
+    file: File;
+    index: number;
+    onRemove: () => void;
+    disabled: boolean;
+}) {
+    const [preview] = useState<string>(() => URL.createObjectURL(file));
 
     useEffect(() => {
-        const urls = files.map((file) => URL.createObjectURL(file));
-        setPreviews(urls);
-        return () => urls.forEach((url) => URL.revokeObjectURL(url));
-    }, [files]);
+        return () => {
+            URL.revokeObjectURL(preview);
+        };
+    }, [preview]);
+
+    return (
+        <div className="relative overflow-hidden rounded-xl border">
+            <img src={preview} alt={`Selected photo ${index + 1}`} className="h-32 w-full object-cover" />
+            <button
+                type="button"
+                aria-label={`Remove ${file.name}`}
+                onClick={onRemove}
+                className="absolute right-2 top-2 rounded-full bg-background/90 p-1.5 shadow"
+                disabled={disabled}
+            >
+                <Trash2 className="size-4" />
+            </button>
+            <p className="truncate px-2 py-1 text-xs">{file.name}</p>
+        </div>
+    );
+}
+
+export function PhotoPicker({ files, onChange, existingCount = 0, disabled = false }: PhotoPickerProps) {
+    const [error, setError] = useState("");
 
     const selectFiles = (event: ChangeEvent<HTMLInputElement>) => {
         const selected = Array.from(event.target.files ?? []);
@@ -139,13 +160,13 @@ export function PhotoPicker({ files, onChange, existingCount = 0, disabled = fal
             {files.length > 0 && (
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {files.map((file, index) => (
-                        <div key={`${file.name}-${file.lastModified}-${index}`} className="relative overflow-hidden rounded-xl border">
-                            <img src={previews[index]} alt={`Selected photo ${index + 1}`} className="h-32 w-full object-cover" />
-                            <button type="button" aria-label={`Remove ${file.name}`} onClick={() => onChange(files.filter((_, i) => i !== index))} className="absolute right-2 top-2 rounded-full bg-background/90 p-1.5 shadow" disabled={disabled}>
-                                <Trash2 className="size-4" />
-                            </button>
-                            <p className="truncate px-2 py-1 text-xs">{file.name}</p>
-                        </div>
+                        <PhotoPreviewItem
+                            key={`${file.name}-${file.lastModified}-${index}`}
+                            file={file}
+                            index={index}
+                            onRemove={() => onChange(files.filter((_, i) => i !== index))}
+                            disabled={disabled}
+                        />
                     ))}
                 </div>
             )}
@@ -223,7 +244,7 @@ export function PhotoManager({ homeId, onChanged }: PhotoManagerProps) {
                         return (
                             <div key={photo.id} className="overflow-hidden rounded-xl border">
                                 <div className="relative">
-                                    <img src={photo.blobUrl} alt={`Home photo ${index + 1}`} className="h-32 w-full object-cover" />
+                                    <img src={photo.imageUrl} alt={`Home photo ${index + 1}`} className="h-32 w-full object-cover" />
                                     {index === 0 && <span className="absolute left-2 top-2 rounded-full bg-background/90 px-2 py-1 text-xs font-medium">Cover</span>}
                                 </div>
                                 <div className="flex flex-wrap gap-1 p-2">
@@ -249,13 +270,37 @@ export function PhotoManager({ homeId, onChanged }: PhotoManagerProps) {
 export function HomeCover({ homeId }: { homeId: number }) {
     const { photos } = useHomePhotos(homeId);
     return photos[0]
-        ? <img src={photos[0].blobUrl} alt="Home cover" className="absolute inset-0 h-full w-full object-cover" />
+        ? <img src={photos[0].imageUrl} alt="Home cover" className="absolute inset-0 h-full w-full object-cover" />
         : <House className="size-16 text-muted-foreground/30" />;
 }
 
 export function HomePhotoGallery({ homeId }: { homeId: number }) {
     const { photos, loading, error } = useHomePhotos(homeId);
     const [active, setActive] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (active === null) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setActive(null);
+            } else if (event.key === "ArrowLeft") {
+                setActive((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+            } else if (event.key === "ArrowRight") {
+                setActive((prev) => (prev !== null && prev < photos.length - 1 ? prev + 1 : prev));
+            }
+        };
+
+        const originalOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        window.addEventListener("keydown", handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [active, photos.length]);
+
     if (loading) return <div className="mb-8 flex h-72 items-center justify-center rounded-2xl bg-muted"><Loader2 className="size-6 animate-spin" /></div>;
     if (error) return <p role="alert" className="mb-8 text-sm text-destructive">{error}</p>;
     if (!photos.length) return <div className="mb-8 flex h-72 flex-col items-center justify-center gap-3 rounded-2xl bg-muted text-muted-foreground"><House className="size-12 opacity-40" /><p>No photos added yet.</p></div>;
@@ -263,7 +308,7 @@ export function HomePhotoGallery({ homeId }: { homeId: number }) {
         <div className="mb-8 space-y-3">
             <div className="relative overflow-hidden rounded-2xl bg-muted">
                 <button type="button" onClick={() => setActive(0)} className="block w-full">
-                    <img src={photos[0].blobUrl} alt="Home cover" className="h-72 w-full object-cover transition hover:scale-[1.02] md:h-96" />
+                    <img src={photos[0].imageUrl} alt="Home cover" className="h-72 w-full object-cover transition hover:scale-[1.02] md:h-96" />
                 </button>
                 <Button type="button" variant="secondary" className="absolute bottom-4 right-4 shadow" onClick={() => setActive(0)}>
                     View all {photos.length} {photos.length === 1 ? "photo" : "photos"}
@@ -276,7 +321,7 @@ export function HomePhotoGallery({ homeId }: { homeId: number }) {
                         <Button variant="outline" type="button" onClick={() => setActive(null)}>Close</Button>
                     </div>
                     <div className="flex min-h-0 flex-1 items-center justify-center">
-                        <img src={photos[active].blobUrl} alt={`Home photo ${active + 1}`} className="max-h-full max-w-full object-contain" />
+                        <img src={photos[active].imageUrl} alt={`Home photo ${active + 1}`} className="max-h-full max-w-full object-contain" />
                     </div>
                     <div className="mt-4 flex justify-between gap-3">
                         <Button type="button" variant="outline" disabled={active === 0} onClick={() => setActive((index) => Math.max(0, (index ?? 0) - 1))}>Previous</Button>

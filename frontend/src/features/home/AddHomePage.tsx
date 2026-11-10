@@ -312,14 +312,18 @@ export default function AddHomePage() {
                     )
                 );
 
-                setSuccess("Home updated successfully!");
+                if (photoError) {
+                    setError(`Home updated, but some photos could not be uploaded: ${photoError}`);
+                } else {
+                    setSuccess("Home updated successfully!");
+                }
             } else {
                 setHomes((previous) => [...previous, savedHome]);
-                setSuccess("Your home was added successfully!");
-            }
-
-            if (photoError) {
-                setError(`Home saved, but some photos could not be uploaded: ${photoError}`);
+                if (photoError) {
+                    setError(`Home added, but some photos could not be uploaded: ${photoError}`);
+                } else {
+                    setSuccess("Your home was added successfully!");
+                }
             }
             setPendingPhotos([]);
             setEditingHomeId(null);

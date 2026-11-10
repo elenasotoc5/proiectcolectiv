@@ -11,6 +11,7 @@ import ubb.inothershoes.entity.User;
 import ubb.inothershoes.model.ActivityDto;
 import ubb.inothershoes.model.UserProfileRequest;
 import ubb.inothershoes.model.UserProfileResponse;
+import ubb.inothershoes.repository.HomeRepository;
 import ubb.inothershoes.repository.UserRepository;
 import ubb.inothershoes.security.UserPrincipal;
 
@@ -24,9 +25,11 @@ import java.util.stream.Collectors;
 public class ProfileService {
 
     private final UserRepository userRepository;
+    private final HomeRepository homeRepository;
 
-    public ProfileService(UserRepository userRepository) {
+    public ProfileService(UserRepository userRepository, HomeRepository homeRepository) {
         this.userRepository = userRepository;
+        this.homeRepository = homeRepository;
     }
 
     @Transactional(readOnly = true)
@@ -61,12 +64,6 @@ public class ProfileService {
         user.setStudyYear(request.getStudyYear());
         if (request.getLocation() != null) {
             user.setLocation(request.getLocation().trim());
-        }
-        if (request.getAddress() != null) {
-            user.setAddress(request.getAddress().trim());
-        }
-        if (request.getHousingType() != null) {
-            user.setHousingType(request.getHousingType().trim());
         }
         user.setAvatarUrl(request.getAvatarUrl());
         if (request.getPreferences() != null) {
@@ -107,8 +104,6 @@ public class ProfileService {
         res.setFieldOfStudy(user.getFieldOfStudy());
         res.setStudyYear(user.getStudyYear());
         res.setLocation(user.getLocation());
-        res.setAddress(user.getAddress());
-        res.setHousingType(user.getHousingType());
         res.setAvatarUrl(user.getAvatarUrl());
         res.setPreferences(new ArrayList<>(user.getPreferences()));
 
@@ -121,6 +116,7 @@ public class ProfileService {
             return dto;
         }).collect(Collectors.toList());
         res.setActivities(activityDtos);
+        res.setHasHome(!homeRepository.findByOwnerId(user.getId()).isEmpty());
 
         return res;
     }

@@ -5,6 +5,8 @@ import RegisterPage from "@/features/auth/RegisterPage";
 import LoginPage from "@/features/auth/LoginPage";
 import ProfilePage from "@/features/profile/ProfilePage";
 import AddHomePage from "@/features/home/AddHomePage";
+import MatchesPage from "@/features/matches/MatchesPage";
+import DashboardPage from "@/features/dashboard/DashboardPage";
 import DashboardSidebar, {
     type DashboardView,
 } from "@/components/layout/DashboardSidebar";
@@ -117,24 +119,28 @@ function App() {
                 {currentView === "profile" ? (
                     <ProfilePage
                         onLogout={handleLogout}
+                        onNavigate={navigateToProtectedPage}
                     />
                 ) : currentView === "my-home" ? (
                     <AddHomePage />
+                ) : currentView === "matches" ? (
+                    <MatchesPage
+                        onNavigate={navigateToProtectedPage}
+                        onLogout={handleLogout}
+                    />
+                ) : currentView === "dashboard" ? (
+                    <DashboardPage
+                        onNavigate={navigateToProtectedPage}
+                        onLogout={handleLogout}
+                    />
                 ) : (
                     <main className="px-6 py-20 md:p-8">
                         <h1 className="text-3xl font-bold">
                             {pageTitles[currentView]}
                         </h1>
-
-                        {currentView === "dashboard" ? (
-                            <p className="mt-3 text-muted-foreground">
-                                Welcome to your LifeSwap Dashboard!
-                            </p>
-                        ) : (
-                            <p className="mt-3 text-muted-foreground">
-                                This section is coming soon.
-                            </p>
-                        )}
+                        <p className="mt-3 text-muted-foreground">
+                            This section is coming soon.
+                        </p>
                     </main>
                 )}
             </div>

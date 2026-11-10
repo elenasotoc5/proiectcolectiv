@@ -144,12 +144,6 @@ components:
         location:
           type: string
           example: "Cluj-Napoca"
-        address:
-          type: string
-          example: "Str. Memorandumului 10, Apt 4"
-        housingType:
-          type: string
-          example: "Entire 1-Bedroom Apartment"
         avatarUrl:
           type: string
           example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
@@ -203,12 +197,6 @@ components:
         location:
           type: string
           example: "Cluj-Napoca"
-        address:
-          type: string
-          example: "Str. Memorandumului 10, Apt 4"
-        housingType:
-          type: string
-          example: "Entire 1-Bedroom Apartment"
         avatarUrl:
           type: string
           example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
@@ -221,6 +209,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActivityDto"
+        hasHome:
+          type: boolean
+          example: true
 
     CreateHomeRequest:
       type: object

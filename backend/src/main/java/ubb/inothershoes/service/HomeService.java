@@ -59,6 +59,13 @@ public class HomeService {
                         "User not found"
                 ));
 
+        if (!homeRepository.findByOwnerId(owner.getId()).isEmpty()) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Users can only have one home. Please update your existing home."
+            );
+        }
+
         if (isBlank(request.getTitle()) ||
                 isBlank(request.getCity()) ||
                 isBlank(request.getAddress()) ||
@@ -256,12 +263,18 @@ public class HomeService {
                         "Home not found"
                 ));
 
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+        boolean isOwner = auth != null
+                && auth.getPrincipal() instanceof UserPrincipal principal
+                && home.getOwner().getId().equals(principal.getId());
+
         HomeResponse response = new HomeResponse();
         response.setId(home.getId());
         response.setOwnerId(home.getOwner().getId());
         response.setTitle(home.getTitle());
         response.setCity(home.getCity());
-        response.setAddress(home.getAddress());
+        response.setAddress(isOwner ? home.getAddress() : null);
         response.setDescription(home.getDescription());
         response.setHousingType(home.getHousingType());
         response.setGuestCapacity(home.getGuestCapacity());

@@ -29,7 +29,7 @@ interface Home {
     ownerId: number;
     title: string;
     city: string;
-    address: string;
+    address?: string | null;
     description: string;
     housingType: string;
     guestCapacity: number;
