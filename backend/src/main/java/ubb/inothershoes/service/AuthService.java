@@ -1,91 +1,89 @@
 package ubb.inothershoes.service;
 
-import ubb.inothershoes.entity.User;
-import ubb.inothershoes.repository.UserRepository;
-import ubb.inothershoes.model.RegisterRequest;
-import ubb.inothershoes.model.LoginRequest;
-import ubb.inothershoes.model.UserResponse;
-import ubb.inothershoes.security.JwtService;
-
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import ubb.inothershoes.entity.User;
+import ubb.inothershoes.model.LoginRequest;
+import ubb.inothershoes.model.RegisterRequest;
+import ubb.inothershoes.model.UserResponse;
+import ubb.inothershoes.repository.UserRepository;
+import ubb.inothershoes.security.JwtService;
 
 @Service
 public class AuthService {
-    private static final String DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+  private static final String DUMMY_HASH =
+      "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
+  public AuthService(
+      UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    this.userRepository = userRepository;
+    this.passwordEncoder = passwordEncoder;
+    this.jwtService = jwtService;
+  }
+
+  @Transactional
+  public UserResponse register(RegisterRequest request) {
+    String normalizedEmail = request.getEmail().toLowerCase().trim();
+
+    if (userRepository.existsByEmail(normalizedEmail)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
     }
 
-    @Transactional
-    public UserResponse register(RegisterRequest request) {
-        String normalizedEmail = request.getEmail().toLowerCase().trim();
+    User user = new User();
+    user.setEmail(normalizedEmail);
+    user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+    user.setFirstName(request.getFirstName().trim());
+    user.setLastName(request.getLastName().trim());
 
-        if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Email is already registered"
-            );
-        }
+    User saved;
 
-        User user = new User();
-        user.setEmail(normalizedEmail);
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName().trim());
-        user.setLastName(request.getLastName().trim());
-
-        User saved;
-
-        try {
-            saved = userRepository.saveAndFlush(user);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
-        }
-
-        UserResponse response = createUserResponse(saved);
-        return response;
+    try {
+      saved = userRepository.saveAndFlush(user);
+    } catch (DataIntegrityViolationException e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email is already registered");
     }
 
-    @Transactional(readOnly = true)
-    public UserResponse login(LoginRequest request) {
-        String normalizedEmail = request.getEmail().toLowerCase().trim();
+    UserResponse response = createUserResponse(saved);
+    return response;
+  }
 
-        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+  @Transactional(readOnly = true)
+  public UserResponse login(LoginRequest request) {
+    String normalizedEmail = request.getEmail().toLowerCase().trim();
 
-        if (user == null) {
-            passwordEncoder.matches(request.getPassword(), DUMMY_HASH);
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
-        }
+    User user = userRepository.findByEmail(normalizedEmail).orElse(null);
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
-        }
-
-        UserResponse response = createUserResponse(user);
-        response.setAccessToken(jwtService.generateToken(user));
-        return response;
+    if (user == null) {
+      passwordEncoder.matches(request.getPassword(), DUMMY_HASH);
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
 
-    private UserResponse createUserResponse(User user) {
-        UserResponse response = new UserResponse();
-
-        response.setId(user.getId());
-        response.setFirstName(user.getFirstName());
-        response.setLastName(user.getLastName());
-        response.setEmail(user.getEmail());
-        response.setCreatedAt(user.getCreatedAt());
-
-        return response;
+    if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
     }
+
+    UserResponse response = createUserResponse(user);
+    response.setAccessToken(jwtService.generateToken(user));
+    return response;
+  }
+
+  private UserResponse createUserResponse(User user) {
+    UserResponse response = new UserResponse();
+
+    response.setId(user.getId());
+    response.setFirstName(user.getFirstName());
+    response.setLastName(user.getLastName());
+    response.setEmail(user.getEmail());
+    response.setCreatedAt(user.getCreatedAt());
+
+    return response;
+  }
 }

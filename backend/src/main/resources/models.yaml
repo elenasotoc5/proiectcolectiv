@@ -29,7 +29,7 @@ components:
           type: string
           format: email
           maxLength: 255
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         password:
           type: string
           format: password
@@ -52,7 +52,7 @@ components:
           example: "Doe"
         email:
           type: string
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         accessToken:
           type: string
           example: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
@@ -84,7 +84,7 @@ components:
           type: string
           format: email
           maxLength: 255
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         password:
           type: string
           format: password
@@ -144,12 +144,6 @@ components:
         location:
           type: string
           example: "Cluj-Napoca"
-        address:
-          type: string
-          example: "Str. Memorandumului 10, Apt 4"
-        housingType:
-          type: string
-          example: "Entire 1-Bedroom Apartment"
         avatarUrl:
           type: string
           example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
@@ -184,7 +178,7 @@ components:
           example: "Female"
         email:
           type: string
-          example: "john.doe@example.com"
+          example: "john.doe@lifeswap.com"
         bio:
           type: string
           example: "Remote software engineer who loves specialty coffee, morning runs, and exploring new neighborhoods."
@@ -203,12 +197,6 @@ components:
         location:
           type: string
           example: "Cluj-Napoca"
-        address:
-          type: string
-          example: "Str. Memorandumului 10, Apt 4"
-        housingType:
-          type: string
-          example: "Entire 1-Bedroom Apartment"
         avatarUrl:
           type: string
           example: "https://images.unsplash.com/photo-1534528741775-53994a69daeb"
@@ -221,6 +209,9 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ActivityDto"
+        hasHome:
+          type: boolean
+          example: true
 
     CreateHomeRequest:
       type: object
@@ -286,3 +277,19 @@ components:
         createdAt:
           type: string
           format: date-time
+
+    HomePhotoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        homeId:
+          type: integer
+          format: int64
+        url:
+          type: string
+        contentType:
+          type: string
+        displayOrder:
+          type: integer
