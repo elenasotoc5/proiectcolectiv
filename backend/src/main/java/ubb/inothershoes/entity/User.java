@@ -53,6 +53,11 @@ public class User {
   @Column(name = "preference")
   private Set<String> preferences = new LinkedHashSet<>();
 
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "user_preferred_counties", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "county")
+  private Set<String> preferredCounties = new LinkedHashSet<>();
+
   @OneToMany(
       mappedBy = "user",
       cascade = CascadeType.ALL,
@@ -176,6 +181,14 @@ public class User {
 
   public void setPreferences(Set<String> preferences) {
     this.preferences = preferences;
+  }
+
+  public Set<String> getPreferredCounties() {
+    return preferredCounties;
+  }
+
+  public void setPreferredCounties(Set<String> preferredCounties) {
+    this.preferredCounties = preferredCounties;
   }
 
   public List<Activity> getActivities() {

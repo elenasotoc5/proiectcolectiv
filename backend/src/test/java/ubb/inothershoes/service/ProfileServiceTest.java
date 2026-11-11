@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
@@ -33,6 +34,8 @@ class ProfileServiceTest {
   @Mock private UserRepository userRepository;
 
   @Mock private HomeRepository homeRepository;
+
+  @Mock private CountyService countyService;
 
   @InjectMocks private ProfileService profileService;
 
@@ -89,25 +92,78 @@ class ProfileServiceTest {
 
   @Test
   void updateProfile_whenAuthorized_updatesAndReturnsHasHome() {
+    User currentUser = user;
+    if (currentUser == null) {
+      throw new AssertionError("Expected user to be initialized");
+    }
+
+    UserPrincipal principal = UserPrincipal.create(currentUser);
+    UsernamePasswordAuthenticationToken auth =
+        new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+    SecurityContextHolder.getContext().setAuthentication(auth);
+
+    when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+    when(userRepository.save(anyNonNull(User.class))).thenReturn(currentUser);
+    when(homeRepository.findByOwnerId(1L)).thenReturn(List.of(new Home()));
+
+    UserProfileRequest request = new UserProfileRequest();
+    request.setFirstName("Alicia");
+    request.setPreferences(List.of("Quiet", "Plants", "Coffee"));
+    request.setPreferredCounties(List.of("CJ", "BV"));
+
+    when(countyService.isValidCountyCode("CJ")).thenReturn(true);
+    when(countyService.isValidCountyCode("BV")).thenReturn(true);
+
+    UserProfileResponse response = profileService.updateProfile(1L, request);
+
+    assertThat(response).isNotNull();
+    assertThat(currentUser.getFirstName()).isEqualTo("Alicia");
+    assertThat(response.getHasHome()).isTrue();
+    assertThat(response.getPreferredCounties()).containsExactlyInAnyOrder("CJ", "BV");
+    verify(userRepository).save(currentUser);
+  }
+
+  @NonNull
+  @SuppressWarnings("null")
+  private static <T> T anyNonNull(Class<T> type) {
+    return any(type);
+  }
+
+  @Test
+  void updateProfile_whenPreferredCountyInvalid_throwsBadRequest() {
     UserPrincipal principal = UserPrincipal.create(user);
     UsernamePasswordAuthenticationToken auth =
         new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
     SecurityContextHolder.getContext().setAuthentication(auth);
 
     when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-    when(userRepository.save(any(User.class))).thenReturn(user);
-    when(homeRepository.findByOwnerId(1L)).thenReturn(List.of(new Home()));
+    when(countyService.isValidCountyCode("INVALID")).thenReturn(false);
 
     UserProfileRequest request = new UserProfileRequest();
-    request.setFirstName("Alicia");
-    request.setPreferences(List.of("Quiet", "Plants", "Coffee"));
+    request.setPreferredCounties(List.of("INVALID"));
 
-    UserProfileResponse response = profileService.updateProfile(1L, request);
+    assertThatThrownBy(() -> profileService.updateProfile(1L, request))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("Invalid county identifier");
+  }
 
-    assertThat(response).isNotNull();
-    assertThat(user.getFirstName()).isEqualTo("Alicia");
-    assertThat(response.getHasHome()).isTrue();
-    verify(userRepository).save(user);
+  @Test
+  void updateProfile_whenPreferredCountiesHasDuplicates_throwsBadRequest() {
+    UserPrincipal principal = UserPrincipal.create(user);
+    UsernamePasswordAuthenticationToken auth =
+        new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
+    SecurityContextHolder.getContext().setAuthentication(auth);
+
+    when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    when(countyService.isValidCountyCode("CJ")).thenReturn(true);
+    when(countyService.isValidCountyCode("BV")).thenReturn(true);
+
+    UserProfileRequest request = new UserProfileRequest();
+    request.setPreferredCounties(List.of("CJ", "BV", "CJ"));
+
+    assertThatThrownBy(() -> profileService.updateProfile(1L, request))
+        .isInstanceOf(ResponseStatusException.class)
+        .hasMessageContaining("Duplicate county entries in preferences are not allowed");
   }
 
   @Test

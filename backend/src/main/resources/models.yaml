@@ -7,6 +7,19 @@ components:
           type: string
           example: "UP"
 
+    CountyResponse:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          example: "CJ"
+        name:
+          type: string
+          example: "Cluj"
+
     RegisterRequest:
       type: object
       required:
@@ -152,6 +165,11 @@ components:
           items:
             type: string
           example: ["Early Bird", "Coffee Culture", "Remote Worker", "Fitness & Gym"]
+        preferredCounties:
+          type: array
+          items:
+            type: string
+          example: ["CJ", "BV", "B"]
         activities:
           type: array
           items:
@@ -205,6 +223,11 @@ components:
           items:
             type: string
           example: ["Early Bird", "Coffee Culture", "Remote Worker", "Fitness & Gym"]
+        preferredCounties:
+          type: array
+          items:
+            type: string
+          example: ["CJ", "BV", "B"]
         activities:
           type: array
           items:
@@ -218,6 +241,7 @@ components:
       required:
         - title
         - city
+        - county
         - address
         - description
         - housingType
@@ -231,6 +255,11 @@ components:
           type: string
           minLength: 1
           maxLength: 255
+        county:
+          type: string
+          minLength: 1
+          maxLength: 10
+          example: "CJ"
         address:
           type: string
           minLength: 1
@@ -262,6 +291,9 @@ components:
           type: string
         city:
           type: string
+        county:
+          type: string
+          example: "CJ"
         address:
           type: string
         description:

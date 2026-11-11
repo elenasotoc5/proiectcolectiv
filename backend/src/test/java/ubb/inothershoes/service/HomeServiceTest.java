@@ -34,6 +34,8 @@ public class HomeServiceTest {
 
   @Mock private HomePhotoService homePhotoService;
 
+  @Mock private CountyService countyService;
+
   @InjectMocks private HomeService homeService;
 
   private User owner;
@@ -62,6 +64,7 @@ public class HomeServiceTest {
     CreateHomeRequest request = new CreateHomeRequest();
     request.setTitle("Cozy Loft");
     request.setCity("Cluj");
+    request.setCounty("CJ");
     request.setAddress("Strada Memorandumului 1");
     request.setDescription("Nice view");
     request.setHousingType("Apartment");
@@ -78,10 +81,33 @@ public class HomeServiceTest {
   }
 
   @Test
+  void createHome_shouldThrowException_whenCountyIsInvalid() {
+    CreateHomeRequest request = new CreateHomeRequest();
+    request.setTitle("Cozy Loft");
+    request.setCity("Cluj");
+    request.setCounty("INVALID");
+    request.setAddress("Strada Memorandumului 1");
+    request.setDescription("Nice view");
+    request.setHousingType("Apartment");
+    request.setGuestCapacity(2);
+
+    when(userRepository.findById(10L)).thenReturn(Optional.of(owner));
+    when(homeRepository.findByOwnerId(10L)).thenReturn(Collections.emptyList());
+    when(countyService.isValidCountyCode("INVALID")).thenReturn(false);
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> homeService.createHome(request));
+
+    assertTrue(ex.getMessage().contains("Invalid county identifier"));
+    verify(homeRepository, never()).save(any());
+  }
+
+  @Test
   void createHome_shouldSucceed_whenUserHasNoHomes() {
     CreateHomeRequest request = new CreateHomeRequest();
     request.setTitle("Cozy Loft");
     request.setCity("Cluj");
+    request.setCounty("CJ");
     request.setAddress("Strada Memorandumului 1");
     request.setDescription("Nice view");
     request.setHousingType("Apartment");
@@ -90,6 +116,7 @@ public class HomeServiceTest {
 
     when(userRepository.findById(10L)).thenReturn(Optional.of(owner));
     when(homeRepository.findByOwnerId(10L)).thenReturn(Collections.emptyList());
+    when(countyService.isValidCountyCode("CJ")).thenReturn(true);
     when(homeRepository.save(any(Home.class)))
         .thenAnswer(invocation -> {
           Home h = invocation.getArgument(0);
@@ -102,6 +129,7 @@ public class HomeServiceTest {
     assertNotNull(response);
     assertEquals(100L, response.getId());
     assertEquals("Cozy Loft", response.getTitle());
+    assertEquals("CJ", response.getCounty());
     assertEquals("Strada Memorandumului 1", response.getAddress());
     verify(homeRepository).save(any(Home.class));
   }

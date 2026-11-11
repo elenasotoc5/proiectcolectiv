@@ -4,6 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -25,14 +26,21 @@ public class ProfileService {
 
   private final UserRepository userRepository;
   private final HomeRepository homeRepository;
+  private final CountyService countyService;
 
-  public ProfileService(UserRepository userRepository, HomeRepository homeRepository) {
+  public ProfileService(
+      UserRepository userRepository, HomeRepository homeRepository, CountyService countyService) {
     this.userRepository = userRepository;
     this.homeRepository = homeRepository;
+    this.countyService = countyService;
   }
 
   @Transactional(readOnly = true)
   public UserProfileResponse getProfile(Long userId) {
+    if (userId == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User ID is required");
+    }
+
     User user =
         userRepository
             .findById(userId)
@@ -44,6 +52,10 @@ public class ProfileService {
 
   @Transactional
   public UserProfileResponse updateProfile(Long userId, UserProfileRequest request) {
+    if (userId == null) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User ID is required");
+    }
+
     verifyUserOwnership(userId);
 
     User user =
@@ -75,6 +87,26 @@ public class ProfileService {
     user.setAvatarUrl(request.getAvatarUrl());
     if (request.getPreferences() != null) {
       user.setPreferences(new LinkedHashSet<>(request.getPreferences()));
+    }
+    if (request.getPreferredCounties() != null) {
+      Set<String> validatedCounties = new LinkedHashSet<>();
+      for (String c : request.getPreferredCounties()) {
+        if (c == null || c.trim().isEmpty()) {
+          throw new ResponseStatusException(
+              HttpStatus.BAD_REQUEST, "County identifier cannot be blank");
+        }
+        String normalized = c.trim().toUpperCase();
+        if (!countyService.isValidCountyCode(normalized)) {
+          throw new ResponseStatusException(
+              HttpStatus.BAD_REQUEST, "Invalid county identifier in preferences: " + c);
+        }
+        if (!validatedCounties.add(normalized)) {
+          throw new ResponseStatusException(
+              HttpStatus.BAD_REQUEST,
+              "Duplicate county entries in preferences are not allowed: " + normalized);
+        }
+      }
+      user.setPreferredCounties(validatedCounties);
     }
     user.setUpdatedAt(OffsetDateTime.now());
 
@@ -114,6 +146,7 @@ public class ProfileService {
     res.setLocation(user.getLocation());
     res.setAvatarUrl(user.getAvatarUrl());
     res.setPreferences(new ArrayList<>(user.getPreferences()));
+    res.setPreferredCounties(new ArrayList<>(user.getPreferredCounties()));
 
     List<ActivityDto> activityDtos =
         user.getActivities().stream()

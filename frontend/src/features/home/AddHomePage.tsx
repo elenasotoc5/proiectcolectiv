@@ -40,6 +40,11 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { getAuthHeaders } from "@/lib/auth";
+import {
+    ROMANIAN_COUNTIES,
+    getCountyName,
+    isValidCountyId,
+} from "@/features/counties/counties";
 
 const API_URL =
     import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -49,6 +54,7 @@ interface Home {
     ownerId: number;
     title: string;
     city: string;
+    county: string;
     address: string;
     description: string;
     housingType: string;
@@ -84,6 +90,7 @@ export default function AddHomePage() {
 
     const [title, setTitle] = useState("");
     const [city, setCity] = useState("");
+    const [county, setCounty] = useState("");
     const [address, setAddress] = useState("");
     const [description, setDescription] = useState("");
     const [housingType, setHousingType] = useState("");
@@ -109,6 +116,7 @@ export default function AddHomePage() {
     const hasChanges = editingHome === undefined ||
         title.trim() !== editingHome.title ||
         city.trim() !== editingHome.city ||
+        county !== editingHome.county ||
         address.trim() !== editingHome.address ||
         description.trim() !== editingHome.description ||
         housingType !== editingHome.housingType ||
@@ -177,6 +185,7 @@ export default function AddHomePage() {
 
         setTitle(home.title);
         setCity(home.city);
+        setCounty(home.county || "");
         setAddress(home.address);
         setDescription(home.description);
         setHousingType(home.housingType);
@@ -194,6 +203,7 @@ export default function AddHomePage() {
 
         setTitle("");
         setCity("");
+        setCounty("");
         setAddress("");
         setDescription("");
         setHousingType("");
@@ -248,6 +258,7 @@ export default function AddHomePage() {
         if (
             !title.trim() ||
             !city.trim() ||
+            !county ||
             !address.trim() ||
             !description.trim() ||
             !housingType ||
@@ -255,6 +266,11 @@ export default function AddHomePage() {
             Number(guestCapacity) < 1
         ) {
             setError("Please complete all required fields.");
+            return;
+        }
+
+        if (!isValidCountyId(county)) {
+            setError("Please select a valid Romanian county.");
             return;
         }
 
@@ -276,6 +292,7 @@ export default function AddHomePage() {
                 body: JSON.stringify({
                     title: title.trim(),
                     city: city.trim(),
+                    county: county.trim().toUpperCase(),
                     address: address.trim(),
                     description: description.trim(),
                     housingType,
@@ -329,6 +346,7 @@ export default function AddHomePage() {
             setEditingHomeId(null);
             setTitle("");
             setCity("");
+            setCounty("");
             setAddress("");
             setDescription("");
             setHousingType("");
@@ -511,7 +529,7 @@ export default function AddHomePage() {
 
                                 <CardDescription className="flex items-center gap-1.5 text-sm">
                                     <span>📍</span>
-                                    {home.city}
+                                    {home.city}{home.county ? `, ${getCountyName(home.county)}` : ""}
                                 </CardDescription>
                             </CardHeader>
 
@@ -547,7 +565,7 @@ export default function AddHomePage() {
                                         Location
                                     </span>
                                         <span className="text-sm font-medium">
-                                        {home.city}
+                                        {home.city}{home.county ? `, ${getCountyName(home.county)} (${home.county})` : ""}
                                     </span>
                                     </div>
 
@@ -677,6 +695,29 @@ export default function AddHomePage() {
 
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-2">
+                                <Label htmlFor="county">
+                                    County / Județ *
+                                </Label>
+                                <NativeSelect
+                                    id="county"
+                                    value={county}
+                                    onChange={(e) =>
+                                        setCounty(e.target.value)
+                                    }
+                                    required
+                                >
+                                    <NativeSelectOption value="">
+                                        Select County / Județ
+                                    </NativeSelectOption>
+                                    {ROMANIAN_COUNTIES.map((c) => (
+                                        <NativeSelectOption key={c.id} value={c.id}>
+                                            {c.name} ({c.id})
+                                        </NativeSelectOption>
+                                    ))}
+                                </NativeSelect>
+                            </div>
+
+                            <div className="space-y-2">
                                 <Label htmlFor="city">
                                     City *
                                 </Label>
@@ -691,22 +732,22 @@ export default function AddHomePage() {
                                     required
                                 />
                             </div>
+                        </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="address">
-                                    Address *
-                                </Label>
-                                <Input
-                                    id="address"
-                                    value={address}
-                                    onChange={(e) =>
-                                        setAddress(e.target.value)
-                                    }
-                                    placeholder="Strada Memorandumului 10"
-                                    maxLength={255}
-                                    required
-                                />
-                            </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="address">
+                                Address *
+                            </Label>
+                            <Input
+                                id="address"
+                                value={address}
+                                onChange={(e) =>
+                                    setAddress(e.target.value)
+                                }
+                                placeholder="Strada Memorandumului 10"
+                                maxLength={255}
+                                required
+                            />
                         </div>
 
                         <div className="space-y-2">
