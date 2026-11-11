@@ -188,7 +188,7 @@ export default function LoginPage({
                                     id="email"
                                     name="email"
                                     type="email"
-                                    placeholder="name@example.com"
+                                    placeholder="name@lifeswap.com"
                                     value={formData.email}
                                     onChange={handleChange}
                                     disabled={isLoading}

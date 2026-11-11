@@ -4,6 +4,8 @@ import {
     HousePlus,
     Loader2,
     AlertCircle,
+    Pencil,
+    Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-
+import HomeDetailsPage from "@/features/home/HomeDetailsPage";
+import { HomeCover, PhotoManager, PhotoPicker, uploadHomePhotos } from "@/features/home/HomePhotos";
 import {
     Card,
     CardContent,
@@ -24,6 +27,17 @@ import {
     NativeSelect,
     NativeSelectOption,
 } from "@/components/ui/native-select";
+
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { getAuthHeaders } from "@/lib/auth";
 
@@ -67,7 +81,7 @@ const HOUSING_TYPES = [
 
 export default function AddHomePage() {
 
-    // Form fields
+
     const [title, setTitle] = useState("");
     const [city, setCity] = useState("");
     const [address, setAddress] = useState("");
@@ -75,18 +89,34 @@ export default function AddHomePage() {
     const [housingType, setHousingType] = useState("");
     const [guestCapacity, setGuestCapacity] = useState("1");
     const [amenities, setAmenities] = useState<string[]>([]);
+    const [pendingPhotos, setPendingPhotos] = useState<File[]>([]);
 
-    // Existing homes
+
     const [homes, setHomes] = useState<Home[]>([]);
     const [isLoadingHomes, setIsLoadingHomes] = useState(true);
     const [loadError, setLoadError] = useState("");
 
-    // Form status
+
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
-    // Load saved homes when opening My Home
+    const [editingHomeId, setEditingHomeId] = useState<number | null>(null);
+    const [deletingHomeId, setDeletingHomeId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [selectedHomeId, setSelectedHomeId] = useState<number | null>(null);
+    const editingHome = homes.find((home) => home.id === editingHomeId);
+    const hasChanges = editingHome === undefined ||
+        title.trim() !== editingHome.title ||
+        city.trim() !== editingHome.city ||
+        address.trim() !== editingHome.address ||
+        description.trim() !== editingHome.description ||
+        housingType !== editingHome.housingType ||
+        Number(guestCapacity) !== editingHome.guestCapacity ||
+        [...amenities].sort().join("|") !==
+        [...(editingHome.amenities ?? [])].sort().join("|");
+
+
     useEffect(() => {
         let active = true;
 
@@ -132,7 +162,7 @@ export default function AddHomePage() {
         };
     }, []);
 
-    // Select / unselect an amenity
+
     const toggleAmenity = (amenity: string) => {
         setAmenities((previous) =>
             previous.includes(amenity)
@@ -141,7 +171,74 @@ export default function AddHomePage() {
         );
     };
 
-    // Create a new home
+
+    const handleEdit = (home: Home) => {
+        setEditingHomeId(home.id);
+
+        setTitle(home.title);
+        setCity(home.city);
+        setAddress(home.address);
+        setDescription(home.description);
+        setHousingType(home.housingType);
+        setGuestCapacity(String(home.guestCapacity));
+        setAmenities([...(home.amenities ?? [])]);
+        setPendingPhotos([]);
+
+        setError("");
+        setSuccess("");
+    };
+
+
+    const handleCancelEdit = () => {
+        setEditingHomeId(null);
+
+        setTitle("");
+        setCity("");
+        setAddress("");
+        setDescription("");
+        setHousingType("");
+        setGuestCapacity("1");
+        setAmenities([]);
+        setPendingPhotos([]);
+
+        setError("");
+    };
+
+
+
+
+
+    const handleDelete = async () => {
+        if (deletingHomeId === null || isDeleting) return;
+
+        setIsDeleting(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            const response = await fetch(`${API_URL}/api/v1/homes/${deletingHomeId}`, {
+                method: "DELETE",
+                headers: getAuthHeaders(),
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => null);
+                throw new Error(data?.message || data?.detail ||
+                    `Failed to delete home (${response.status}).`);
+            }
+
+            setHomes((previous) => previous.filter((home) => home.id !== deletingHomeId));
+            setDeletingHomeId(null);
+            setSelectedHomeId(null);
+            setSuccess("Home deleted successfully!");
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not delete home.");
+            setDeletingHomeId(null);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
@@ -163,26 +260,29 @@ export default function AddHomePage() {
 
         setIsSaving(true);
 
+        const isEditing = editingHomeId !== null;
+
         try {
-            const response = await fetch(
-                `${API_URL}/api/v1/homes`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...getAuthHeaders(),
-                    },
-                    body: JSON.stringify({
-                        title: title.trim(),
-                        city: city.trim(),
-                        address: address.trim(),
-                        description: description.trim(),
-                        housingType,
-                        guestCapacity: Number(guestCapacity),
-                        amenities,
-                    }),
-                }
-            );
+            const url = isEditing
+                ? `${API_URL}/api/v1/homes/${editingHomeId}`
+                : `${API_URL}/api/v1/homes`;
+
+            const response = await fetch(url, {
+                method: isEditing ? "PUT" : "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...getAuthHeaders(),
+                },
+                body: JSON.stringify({
+                    title: title.trim(),
+                    city: city.trim(),
+                    address: address.trim(),
+                    description: description.trim(),
+                    housingType,
+                    guestCapacity: Number(guestCapacity),
+                    amenities,
+                }),
+            });
 
             if (!response.ok) {
                 const data = await response.json().catch(() => null);
@@ -190,20 +290,43 @@ export default function AddHomePage() {
                 throw new Error(
                     data?.message ||
                     data?.detail ||
-                    `Failed to create home (${response.status}).`
+                    `Failed to save home (${response.status}).`
                 );
             }
 
             const savedHome: Home = await response.json();
 
-            setHomes((previousHomes) => [
-                ...previousHomes,
-                savedHome,
-            ]);
+            let photoError = "";
+            if (pendingPhotos.length > 0) {
+                try {
+                    await uploadHomePhotos(savedHome.id, pendingPhotos);
+                } catch (err) {
+                    photoError = err instanceof Error ? err.message : "Could not upload all photos.";
+                }
+            }
 
-            setSuccess("Your home was added successfully!");
+            if (isEditing) {
+                setHomes((previous) =>
+                    previous.map((home) =>
+                        home.id === editingHomeId ? savedHome : home
+                    )
+                );
 
-            // Reset form
+                if (photoError) {
+                    setError(`Home updated, but some photos could not be uploaded: ${photoError}`);
+                } else {
+                    setSuccess("Home updated successfully!");
+                }
+            } else {
+                setHomes((previous) => [...previous, savedHome]);
+                if (photoError) {
+                    setError(`Home added, but some photos could not be uploaded: ${photoError}`);
+                } else {
+                    setSuccess("Your home was added successfully!");
+                }
+            }
+            setPendingPhotos([]);
+            setEditingHomeId(null);
             setTitle("");
             setCity("");
             setAddress("");
@@ -223,7 +346,8 @@ export default function AddHomePage() {
         }
     };
 
-    // Loading state
+
+
     if (isLoadingHomes) {
         return (
             <main className="mx-auto w-full max-w-4xl px-6 py-8">
@@ -235,7 +359,7 @@ export default function AddHomePage() {
         );
     }
 
-    // Error while loading homes
+
     if (loadError) {
         return (
             <main className="mx-auto w-full max-w-4xl px-6 py-8">
@@ -262,9 +386,80 @@ export default function AddHomePage() {
         );
     }
 
-    // Show existing homes
 
-    if (homes.length > 0) {
+
+
+    if (selectedHomeId !== null) {
+        const selectedHome = homes.find(
+            (home) => home.id === selectedHomeId
+        );
+
+        return (
+            <>
+                <HomeDetailsPage
+                    homeId={selectedHomeId}
+                    isOwner={true}
+                    onBack={() => setSelectedHomeId(null)}
+                    onEdit={() => {
+                        if (selectedHome) {
+                            handleEdit(selectedHome);
+                            setSelectedHomeId(null);
+                        }
+                    }}
+                    onDelete={() => setDeletingHomeId(selectedHomeId)}
+                />
+
+                {error && (
+                    <p role="alert" className="px-6 text-destructive">
+                        {error}
+                    </p>
+                )}
+
+                <AlertDialog
+                    open={deletingHomeId === selectedHomeId}
+                    onOpenChange={(open) => {
+                        if (!open && !isDeleting) {
+                            setDeletingHomeId(null);
+                        }
+                    }}
+                >
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>
+                                Delete this home?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                                You are about to permanently delete
+                                "{selectedHome?.title}".
+                                This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+
+                        <AlertDialogFooter>
+                            <AlertDialogCancel disabled={isDeleting}>
+                                Cancel
+                            </AlertDialogCancel>
+
+                            <AlertDialogAction
+                                disabled={isDeleting}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={(event) => {
+                                    event.preventDefault();
+                                    void handleDelete();
+                                }}
+                            >
+                                {isDeleting ? "Deleting..." : "Delete Home"}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            </>
+        );
+    }
+
+
+
+    if (homes.length > 0 && editingHomeId === null) {
         return (
             <main className="mx-auto w-full max-w-6xl px-6 py-8">
                 <div className="mb-8">
@@ -275,6 +470,12 @@ export default function AddHomePage() {
                         Your spaces, ready for new experiences.
                     </p>
                 </div>
+
+                {error && (
+                    <div role="alert" className="mb-6 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                        {error}
+                    </div>
+                )}
 
                 {success && (
                     <div
@@ -291,9 +492,8 @@ export default function AddHomePage() {
                             key={home.id}
                             className="group gap-0 overflow-hidden rounded-2xl border bg-card py-0 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                         >
-                            {/* Home preview */}
                             <div className="relative flex h-48 items-center justify-center bg-gradient-to-br from-muted via-secondary/50 to-muted">
-                                <HousePlus className="size-16 text-muted-foreground/30" />
+                                <HomeCover homeId={home.id} />
 
                                 <span className="absolute left-4 top-4 rounded-full bg-background/90 px-3 py-1.5 text-xs font-semibold shadow-sm">
                                 My Listing
@@ -351,16 +551,66 @@ export default function AddHomePage() {
                                     </span>
                                     </div>
 
-                                    <Button
-                                        variant="outline"
-                                        type="button"
-                                        disabled
-                                        title="Home details coming soon"
-                                    >
-                                        View Details
-                                    </Button>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        <Button
+                                            variant="outline"
+                                            type="button"
+                                            onClick={() => setSelectedHomeId(home.id)}
+                                        >
+                                            View Details
+                                        </Button>
+
+                                        <Button
+                                            variant="outline"
+                                            type="button"
+                                            onClick={() => handleEdit(home)}
+                                        >
+                                            <Pencil className="mr-2 size-4" />
+                                            Edit Home
+                                        </Button>
+
+                                        <Button
+                                            variant="destructive"
+                                            type="button"
+                                            onClick={() => setDeletingHomeId(home.id)}
+                                        >
+                                            <Trash2 className="mr-2 size-4" />
+                                            Delete
+                                        </Button>
+                                    </div>
+
                                 </div>
                             </CardContent>
+                            <AlertDialog
+                                open={deletingHomeId === home.id}
+                                onOpenChange={(open) => {
+                                    if (!open && !isDeleting) setDeletingHomeId(null);
+                                }}
+                            >
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Delete this home?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            You are about to permanently delete "{home.title}".
+                                            This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            disabled={isDeleting}
+                                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            onClick={(event) => {
+                                                event.preventDefault();
+                                                void handleDelete();
+                                            }}
+                                        >
+                                            {isDeleting ? "Deleting..." : "Delete Home"}
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </Card>
                     ))}
                 </div>
@@ -369,19 +619,20 @@ export default function AddHomePage() {
     }
 
 
-    // Show Add Home form if user has no homes
+
     return (
         <main className="mx-auto w-full max-w-4xl px-6 py-8">
 
             <div className="mb-6">
                 <h1 className="flex items-center gap-3 text-3xl font-bold">
                     <HousePlus className="size-7 text-primary" />
-                    Add Home
+                    {editingHomeId !== null ? "Edit Home" : "Add Home"}
                 </h1>
 
                 <p className="mt-2 text-muted-foreground">
-                    Add your home to LifeSwap and prepare it
-                    for future swaps.
+                    {editingHomeId !== null
+                        ? "Update your home details below."
+                        : "Add your home to LifeSwap and prepare it for future swaps."}
                 </p>
             </div>
 
@@ -546,10 +797,23 @@ export default function AddHomePage() {
                             </div>
                         </div>
 
-                        <div className="flex justify-end border-t pt-5">
+                        {editingHomeId === null && (
+                            <PhotoPicker files={pendingPhotos} onChange={setPendingPhotos} disabled={isSaving} />
+                        )}
+
+                        {editingHomeId !== null && (
+                            <PhotoManager homeId={editingHomeId} />
+                        )}
+
+                        <div className="flex justify-end gap-3 border-t pt-5">
+                            {editingHomeId !== null && (
+                                <Button type="button" variant="outline" onClick={handleCancelEdit} disabled={isSaving}>
+                                    Cancel
+                                </Button>
+                            )}
                             <Button
                                 type="submit"
-                                disabled={isSaving}
+                                disabled={isSaving || (editingHomeId !== null && !hasChanges && pendingPhotos.length === 0)}
                             >
                                 {isSaving ? (
                                     <Loader2 className="mr-2 size-4 animate-spin" />
@@ -557,7 +821,7 @@ export default function AddHomePage() {
                                     <HousePlus className="mr-2 size-4" />
                                 )}
 
-                                {isSaving ? "Saving..." : "Add Home"}
+                                {isSaving ? "Saving..." : editingHomeId !== null ? "Save Changes" : "Add Home"}
                             </Button>
                         </div>
                     </form>

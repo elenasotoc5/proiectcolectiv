@@ -8,10 +8,10 @@ import ubb.inothershoes.model.HealthResponse;
 @RestController
 public class HealthController implements HealthApi {
 
-    @Override
-    public ResponseEntity<HealthResponse> health() {
-        HealthResponse response = new HealthResponse();
-        response.setStatus("UP");
-        return ResponseEntity.ok(response);
-    }
+  @Override
+  public ResponseEntity<HealthResponse> health() {
+    HealthResponse response = new HealthResponse();
+    response.setStatus("UP");
+    return ResponseEntity.ok(response);
+  }
 }
