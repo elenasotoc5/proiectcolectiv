@@ -78,9 +78,6 @@ public class ProfileService {
 
     user.setBio(request.getBio());
     user.setOccupation(request.getOccupation());
-    user.setUniversity(request.getUniversity());
-    user.setFieldOfStudy(request.getFieldOfStudy());
-    user.setStudyYear(request.getStudyYear());
     if (request.getLocation() != null) {
       user.setLocation(request.getLocation().trim());
     }
@@ -140,9 +137,6 @@ public class ProfileService {
     res.setEmail(user.getEmail());
     res.setBio(user.getBio());
     res.setOccupation(user.getOccupation());
-    res.setUniversity(user.getUniversity());
-    res.setFieldOfStudy(user.getFieldOfStudy());
-    res.setStudyYear(user.getStudyYear());
     res.setLocation(user.getLocation());
     res.setAvatarUrl(user.getAvatarUrl());
     res.setPreferences(new ArrayList<>(user.getPreferences()));

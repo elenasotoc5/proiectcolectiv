@@ -145,15 +145,6 @@ components:
         occupation:
           type: string
           example: "Software Engineer"
-        university:
-          type: string
-          example: "Babes-Bolyai University"
-        fieldOfStudy:
-          type: string
-          example: "Computer Science"
-        studyYear:
-          type: integer
-          example: 3
         location:
           type: string
           example: "Cluj-Napoca"
@@ -203,15 +194,6 @@ components:
         occupation:
           type: string
           example: "Software Engineer"
-        university:
-          type: string
-          example: "Babes-Bolyai University"
-        fieldOfStudy:
-          type: string
-          example: "Computer Science"
-        studyYear:
-          type: integer
-          example: 3
         location:
           type: string
           example: "Cluj-Napoca"

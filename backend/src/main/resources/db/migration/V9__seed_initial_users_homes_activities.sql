@@ -11,9 +11,6 @@ INSERT INTO users (
     gender,
     bio,
     occupation,
-    university,
-    field_of_study,
-    study_year,
     location,
     avatar_url
 )
@@ -26,9 +23,6 @@ VALUES
         'Female',
         'Architecture student and specialty coffee enthusiast. Love exploring historic neighborhoods, sketching streetscapes, and quiet reading in botanical gardens.',
         'Architectural Designer',
-        'Technical University of Cluj-Napoca',
-        'Architecture & Urban Planning',
-        4,
         'Cluj-Napoca, Romania',
         'https://images.unsplash.com/photo-1534528741775-53994a69daeb'
     ),
@@ -40,9 +34,6 @@ VALUES
         'Male',
         'Remote developer who loves mountain biking, trail running, and crisp alpine air. When not coding, I am exploring Transylvanian mountain paths.',
         'Senior Software Engineer',
-        'Babes-Bolyai University',
-        'Computer Science',
-        3,
         'Brasov, Romania',
         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d'
     ),
@@ -54,9 +45,6 @@ VALUES
         'Female',
         'French-Romanian curator passionate about contemporary art exhibitions, indie film festivals, and finding hidden courtyard cafes in historic quarters.',
         'Visual Arts Curator',
-        'National University of Arts',
-        'Fine Arts & Design',
-        2,
         'Bucharest, Romania',
         'https://images.unsplash.com/photo-1494790108377-be9c29b29330'
     ),
@@ -68,9 +56,6 @@ VALUES
         'Male',
         'Audio producer and foodie. Love cycling along the river, visiting local farmers markets, and cooking dinners for friends.',
         'Sound Designer & Music Producer',
-        'Lucian Blaga University of Sibiu',
-        'Performing Arts & Audio Production',
-        3,
         'Sibiu, Romania',
         'https://images.unsplash.com/photo-1500648767791-00dcc994a43e'
     ),
@@ -82,9 +67,6 @@ VALUES
         'Female',
         'Urban ecologist passionate about sustainable cities, botanical sketching, and yoga by the Bega canal. House full of flourishing plants!',
         'Urban Ecologist',
-        'Politehnica University of Timisoara',
-        'Environmental Engineering',
-        5,
         'Timisoara, Romania',
         'https://images.unsplash.com/photo-1517841905240-472988babdf9'
     )

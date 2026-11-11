@@ -71,9 +71,6 @@ export interface UserProfile {
     email: string;
     bio: string;
     occupation: string;
-    university?: string;
-    fieldOfStudy?: string;
-    studyYear?: number | null;
     location: string;
     avatarUrl: string;
     preferences: string[];

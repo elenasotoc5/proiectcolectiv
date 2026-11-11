@@ -35,14 +35,6 @@ public class User {
 
   private String occupation;
 
-  private String university;
-
-  @Column(name = "field_of_study")
-  private String fieldOfStudy;
-
-  @Column(name = "study_year")
-  private Integer studyYear;
-
   private String location;
 
   @Column(name = "avatar_url")
@@ -133,30 +125,6 @@ public class User {
 
   public void setOccupation(String occupation) {
     this.occupation = occupation;
-  }
-
-  public String getUniversity() {
-    return university;
-  }
-
-  public void setUniversity(String university) {
-    this.university = university;
-  }
-
-  public String getFieldOfStudy() {
-    return fieldOfStudy;
-  }
-
-  public void setFieldOfStudy(String fieldOfStudy) {
-    this.fieldOfStudy = fieldOfStudy;
-  }
-
-  public Integer getStudyYear() {
-    return studyYear;
-  }
-
-  public void setStudyYear(Integer studyYear) {
-    this.studyYear = studyYear;
   }
 
   public String getLocation() {
