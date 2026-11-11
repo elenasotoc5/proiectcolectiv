@@ -26,6 +26,9 @@ public class Home {
   private String city;
 
   @Column(nullable = false)
+  private String county;
+
+  @Column(nullable = false)
   private String address;
 
   @Column(nullable = false, columnDefinition = "TEXT")
@@ -82,6 +85,14 @@ public class Home {
 
   public void setCity(String city) {
     this.city = city;
+  }
+
+  public String getCounty() {
+    return county;
+  }
+
+  public void setCounty(String county) {
+    this.county = county;
   }
 
   public String getAddress() {

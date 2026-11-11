@@ -1,8 +1,5 @@
 ALTER TABLE users
     ADD COLUMN bio TEXT,
-    ADD COLUMN university VARCHAR(255),
-    ADD COLUMN field_of_study VARCHAR(255),
-    ADD COLUMN study_year INT,
     ADD COLUMN location VARCHAR(255),
     ADD COLUMN housing_type VARCHAR(100),
     ADD COLUMN avatar_url VARCHAR(500);

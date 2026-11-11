@@ -106,6 +106,10 @@ migrate: $(MVN_BIN)
 up:
 	docker compose up -d --build
 
+.PHONY: sync-counties
+sync-counties:
+	python3 scripts/sync_siruta_counties.py
+
 .PHONY: down
 down:
 	docker compose down -v

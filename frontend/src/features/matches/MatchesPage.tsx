@@ -11,6 +11,7 @@ import {
     Compass,
     ShieldAlert,
     RefreshCw,
+    MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { DashboardView } from "@/components/layout/DashboardSidebar";
 import { getAuthHeaders, getStoredUserId, clearStoredAuth } from "@/lib/auth";
+import { getCountyName } from "@/features/counties/counties";
 
 const API_URL =
     import.meta.env.API_URL || import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -40,6 +42,7 @@ interface UserProfileData {
     lastName: string;
     location: string;
     preferences: string[];
+    preferredCounties: string[];
     activities: ActivityItem[];
     hasHome?: boolean;
 }
@@ -88,6 +91,7 @@ export default function MatchesPage({ onNavigate, onLogout }: MatchesPageProps) 
                             lastName: profileData.lastName || "",
                             location: profileData.location || "",
                             preferences: Array.isArray(profileData.preferences) ? profileData.preferences : [],
+                            preferredCounties: Array.isArray(profileData.preferredCounties) ? profileData.preferredCounties : [],
                             activities: Array.isArray(profileData.activities) ? profileData.activities : [],
                             hasHome: Boolean(profileData.hasHome),
                         });
@@ -346,6 +350,12 @@ export default function MatchesPage({ onNavigate, onLogout }: MatchesPageProps) 
                                                 <Sparkles className="size-3 text-green-600" />
                                                 {profile?.preferences.length} Preferences
                                             </Badge>
+                                            {profile?.preferredCounties && profile.preferredCounties.length > 0 && (
+                                                <Badge variant="outline" className="bg-background text-xs gap-1">
+                                                    <MapPin className="size-3 text-green-600" />
+                                                    {profile.preferredCounties.length} Preferred Counties
+                                                </Badge>
+                                            )}
                                             <Badge variant="outline" className="bg-background text-xs gap-1">
                                                 <CalendarCheck className="size-3 text-green-600" />
                                                 {profile?.activities.length} Host Activity
@@ -377,7 +387,11 @@ export default function MatchesPage({ onNavigate, onLogout }: MatchesPageProps) 
                             </div>
                             <h3 className="font-semibold text-lg">Looking for Compatible Swap Partners</h3>
                             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                                You are ready for matching! As new members join and list their homes in your preferred destinations, suggested swap partners will appear right here.
+                                You are ready for matching! As new members join and list their homes in your preferred destinations
+                                {profile?.preferredCounties && profile.preferredCounties.length > 0
+                                    ? ` (${profile.preferredCounties.map((c) => getCountyName(c)).join(", ")})`
+                                    : ""}
+                                , suggested swap partners will appear right here.
                             </p>
                             <div className="pt-2 flex justify-center gap-3">
                                 <Button variant="outline" size="sm" onClick={() => onNavigate("explore")}>

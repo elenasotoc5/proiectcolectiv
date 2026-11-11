@@ -35,14 +35,6 @@ public class User {
 
   private String occupation;
 
-  private String university;
-
-  @Column(name = "field_of_study")
-  private String fieldOfStudy;
-
-  @Column(name = "study_year")
-  private Integer studyYear;
-
   private String location;
 
   @Column(name = "avatar_url")
@@ -52,6 +44,11 @@ public class User {
   @CollectionTable(name = "user_preferences", joinColumns = @JoinColumn(name = "user_id"))
   @Column(name = "preference")
   private Set<String> preferences = new LinkedHashSet<>();
+
+  @ElementCollection(fetch = FetchType.EAGER)
+  @CollectionTable(name = "user_preferred_counties", joinColumns = @JoinColumn(name = "user_id"))
+  @Column(name = "county")
+  private Set<String> preferredCounties = new LinkedHashSet<>();
 
   @OneToMany(
       mappedBy = "user",
@@ -130,30 +127,6 @@ public class User {
     this.occupation = occupation;
   }
 
-  public String getUniversity() {
-    return university;
-  }
-
-  public void setUniversity(String university) {
-    this.university = university;
-  }
-
-  public String getFieldOfStudy() {
-    return fieldOfStudy;
-  }
-
-  public void setFieldOfStudy(String fieldOfStudy) {
-    this.fieldOfStudy = fieldOfStudy;
-  }
-
-  public Integer getStudyYear() {
-    return studyYear;
-  }
-
-  public void setStudyYear(Integer studyYear) {
-    this.studyYear = studyYear;
-  }
-
   public String getLocation() {
     return location;
   }
@@ -176,6 +149,14 @@ public class User {
 
   public void setPreferences(Set<String> preferences) {
     this.preferences = preferences;
+  }
+
+  public Set<String> getPreferredCounties() {
+    return preferredCounties;
+  }
+
+  public void setPreferredCounties(Set<String> preferredCounties) {
+    this.preferredCounties = preferredCounties;
   }
 
   public List<Activity> getActivities() {

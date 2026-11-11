@@ -18,8 +18,9 @@ public class GlobalExceptionHandlerTest {
     ResponseEntity<ErrorResponse> response = handler.handleMaxUploadSize(ex);
 
     assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-    assertNotNull(response.getBody());
-    assertEquals(400, response.getBody().getErrorCode());
-    assertTrue(response.getBody().getMessage().contains("maximum allowed limit of 5 MB"));
+    ErrorResponse body = response.getBody();
+    assertNotNull(body);
+    assertEquals(400, body.getErrorCode());
+    assertTrue(body.getMessage().contains("maximum allowed limit of 5 MB"));
   }
 }

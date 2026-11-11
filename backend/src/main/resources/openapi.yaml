@@ -27,6 +27,22 @@ paths:
               schema:
                 $ref: "./models.yaml#/components/schemas/ErrorResponse"
 
+  /api/v1/counties:
+    get:
+      summary: Get all Romanian counties and Bucharest
+      operationId: getCounties
+      tags:
+        - Locations
+      responses:
+        "200":
+          description: List of all 41 Romanian counties and Bucharest
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./models.yaml#/components/schemas/CountyResponse"
+
   /api/v1/auth/register:
     post:
       summary: Register a new user

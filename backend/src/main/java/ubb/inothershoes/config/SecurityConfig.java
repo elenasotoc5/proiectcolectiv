@@ -55,7 +55,7 @@ public class SecurityConfig {
         .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
         .authorizeHttpRequests(auth ->
-            auth.requestMatchers("/api/v1/auth/**", "/api/v1/health", "/error")
+            auth.requestMatchers("/api/v1/auth/**", "/api/v1/health", "/api/v1/counties", "/error")
                 .permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/homes/*/photos/*/image")
                 .permitAll()
