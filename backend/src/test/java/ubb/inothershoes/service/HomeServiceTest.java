@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
@@ -77,7 +78,7 @@ public class HomeServiceTest {
         assertThrows(ResponseStatusException.class, () -> homeService.createHome(request));
 
     assertTrue(ex.getMessage().contains("Users can only have one home"));
-    verify(homeRepository, never()).save(any());
+    verify(homeRepository, never()).save(anyNonNull(Home.class));
   }
 
   @Test
@@ -99,7 +100,7 @@ public class HomeServiceTest {
         assertThrows(ResponseStatusException.class, () -> homeService.createHome(request));
 
     assertTrue(ex.getMessage().contains("Invalid county identifier"));
-    verify(homeRepository, never()).save(any());
+    verify(homeRepository, never()).save(anyNonNull(Home.class));
   }
 
   @Test
@@ -117,7 +118,7 @@ public class HomeServiceTest {
     when(userRepository.findById(10L)).thenReturn(Optional.of(owner));
     when(homeRepository.findByOwnerId(10L)).thenReturn(Collections.emptyList());
     when(countyService.isValidCountyCode("CJ")).thenReturn(true);
-    when(homeRepository.save(any(Home.class)))
+    when(homeRepository.save(anyNonNull(Home.class)))
         .thenAnswer(invocation -> {
           Home h = invocation.getArgument(0);
           h.setId(100L);
@@ -131,7 +132,13 @@ public class HomeServiceTest {
     assertEquals("Cozy Loft", response.getTitle());
     assertEquals("CJ", response.getCounty());
     assertEquals("Strada Memorandumului 1", response.getAddress());
-    verify(homeRepository).save(any(Home.class));
+    verify(homeRepository).save(anyNonNull(Home.class));
+  }
+
+  @NonNull
+  @SuppressWarnings("null")
+  private static <T> T anyNonNull(Class<T> type) {
+    return any(type);
   }
 
   @Test
