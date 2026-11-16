@@ -1,3 +1,4 @@
+
 package ubb.inothershoes.controller;
 
 import jakarta.validation.Valid;
@@ -12,9 +13,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import ubb.inothershoes.api.HomesApi;
 import ubb.inothershoes.entity.HomePhoto;
+import ubb.inothershoes.model.CreateHomeAvailabilityRequest;
 import ubb.inothershoes.model.CreateHomeRequest;
+import ubb.inothershoes.model.HomeAvailabilityResponse;
 import ubb.inothershoes.model.HomePhotoResponse;
 import ubb.inothershoes.model.HomeResponse;
+import ubb.inothershoes.service.HomeAvailabilityService;
 import ubb.inothershoes.service.HomePhotoService;
 import ubb.inothershoes.service.HomeService;
 
@@ -23,14 +27,20 @@ public class HomeController implements HomesApi {
 
   private final HomeService homeService;
   private final HomePhotoService homePhotoService;
+  private final HomeAvailabilityService homeAvailabilityService;
 
-  public HomeController(HomeService homeService, HomePhotoService homePhotoService) {
+  public HomeController(
+      HomeService homeService,
+      HomePhotoService homePhotoService,
+      HomeAvailabilityService homeAvailabilityService) {
     this.homeService = homeService;
     this.homePhotoService = homePhotoService;
+    this.homeAvailabilityService = homeAvailabilityService;
   }
 
   @Override
-  public ResponseEntity<HomeResponse> createHome(@Valid CreateHomeRequest createHomeRequest) {
+  public ResponseEntity<HomeResponse> createHome(
+      @Valid CreateHomeRequest createHomeRequest) {
 
     HomeResponse response = homeService.createHome(createHomeRequest);
 
@@ -64,12 +74,16 @@ public class HomeController implements HomesApi {
 
   @Override
   public ResponseEntity<HomeResponse> getHomeById(Long homeId) {
+
     HomeResponse response = homeService.getHomeById(homeId);
+
     return ResponseEntity.ok(response);
   }
 
   @Override
-  public ResponseEntity<HomePhotoResponse> uploadHomePhoto(Long homeId, MultipartFile file) {
+  public ResponseEntity<HomePhotoResponse> uploadHomePhoto(
+      Long homeId, MultipartFile file) {
+
     HomePhoto photo = homePhotoService.uploadPhoto(homeId, file);
 
     return ResponseEntity.status(HttpStatus.CREATED).body(toPhotoResponse(photo));
@@ -77,8 +91,8 @@ public class HomeController implements HomesApi {
 
   @Override
   public ResponseEntity<List<HomePhotoResponse>> getHomePhotos(Long homeId) {
-    List<HomePhoto> photos = homePhotoService.getHomePhotos(homeId);
 
+    List<HomePhoto> photos = homePhotoService.getHomePhotos(homeId);
     List<HomePhotoResponse> responses = new ArrayList<>();
 
     for (HomePhoto photo : photos) {
@@ -90,6 +104,7 @@ public class HomeController implements HomesApi {
 
   @Override
   public ResponseEntity<Void> deleteHomePhoto(Long homeId, Long photoId) {
+
     homePhotoService.deletePhoto(homeId, photoId);
 
     return ResponseEntity.noContent().build();
@@ -97,6 +112,7 @@ public class HomeController implements HomesApi {
 
   @Override
   public ResponseEntity<Resource> getHomePhotoImage(Long homeId, Long photoId) {
+
     HomePhoto photo = homePhotoService.getPhotoById(homeId, photoId);
     Resource image = homePhotoService.getPhotoImage(photo);
 
@@ -107,9 +123,10 @@ public class HomeController implements HomesApi {
   }
 
   @Override
-  public ResponseEntity<List<HomePhotoResponse>> setPrimaryHomePhoto(Long homeId, Long photoId) {
-    List<HomePhoto> photos = homePhotoService.setPrimaryPhoto(homeId, photoId);
+  public ResponseEntity<List<HomePhotoResponse>> setPrimaryHomePhoto(
+      Long homeId, Long photoId) {
 
+    List<HomePhoto> photos = homePhotoService.setPrimaryPhoto(homeId, photoId);
     List<HomePhotoResponse> responses = new ArrayList<>();
 
     for (HomePhoto photo : photos) {
@@ -119,7 +136,51 @@ public class HomeController implements HomesApi {
     return ResponseEntity.ok(responses);
   }
 
+  @Override
+  public ResponseEntity<List<HomeAvailabilityResponse>> getHomeAvailability(
+      Long homeId) {
+
+    List<HomeAvailabilityResponse> response =
+        homeAvailabilityService.getHomeAvailability(homeId);
+
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
+  public ResponseEntity<HomeAvailabilityResponse> createHomeAvailability(
+      Long homeId,
+      @Valid CreateHomeAvailabilityRequest request) {
+
+    HomeAvailabilityResponse response =
+        homeAvailabilityService.createHomeAvailability(homeId, request);
+
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @Override
+  public ResponseEntity<HomeAvailabilityResponse> updateHomeAvailability(
+      Long homeId,
+      Long availabilityId,
+      @Valid CreateHomeAvailabilityRequest request) {
+
+    HomeAvailabilityResponse response =
+        homeAvailabilityService.updateHomeAvailability(
+            homeId, availabilityId, request);
+
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
+  public ResponseEntity<Void> deleteHomeAvailability(
+      Long homeId, Long availabilityId) {
+
+    homeAvailabilityService.deleteHomeAvailability(homeId, availabilityId);
+
+    return ResponseEntity.noContent().build();
+  }
+
   private HomePhotoResponse toPhotoResponse(HomePhoto photo) {
+
     HomePhotoResponse response = new HomePhotoResponse();
 
     Long homeId = photo.getHome().getId();
@@ -128,8 +189,8 @@ public class HomeController implements HomesApi {
     response.setHomeId(homeId);
     response.setContentType(photo.getContentType());
     response.setDisplayOrder(photo.getDisplayOrder());
-
-    response.setUrl("/api/v1/homes/" + homeId + "/photos/" + photo.getId() + "/image");
+    response.setUrl(
+        "/api/v1/homes/" + homeId + "/photos/" + photo.getId() + "/image");
 
     return response;
   }
