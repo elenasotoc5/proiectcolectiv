@@ -71,7 +71,6 @@ const COUNTIES_STORAGE_KEY = "lifeswap_counties_cache";
 let cachedCounties: County[] | null = null;
 let countiesPromise: Promise<County[]> | null = null;
 
-// Initialize from sessionStorage if available
 try {
     if (typeof window !== "undefined") {
         const stored = sessionStorage.getItem(COUNTIES_STORAGE_KEY);
@@ -83,9 +82,7 @@ try {
             }
         }
     }
-} catch {
-    // Ignore storage parse issues
-}
+} catch {}
 
 export function getCounties(): County[] {
     return cachedCounties ? [...cachedCounties] : [...ROMANIAN_COUNTIES];
@@ -111,9 +108,7 @@ export async function fetchCounties(): Promise<County[]> {
                         if (typeof window !== "undefined") {
                             sessionStorage.setItem(COUNTIES_STORAGE_KEY, JSON.stringify(data));
                         }
-                    } catch {
-                        // Ignore storage write issues
-                    }
+                    } catch {}
                     return data;
                 }
             }
