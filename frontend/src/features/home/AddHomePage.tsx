@@ -41,7 +41,7 @@ import {
 
 import { getAuthHeaders } from "@/lib/auth";
 import {
-    ROMANIAN_COUNTIES,
+    useCounties,
     getCountyName,
     isValidCountyId,
 } from "@/features/counties/counties";
@@ -86,6 +86,7 @@ const HOUSING_TYPES = [
 ];
 
 export default function AddHomePage() {
+    const availableCounties = useCounties();
 
 
     const [title, setTitle] = useState("");
@@ -709,7 +710,7 @@ export default function AddHomePage() {
                                     <NativeSelectOption value="">
                                         Select County / Județ
                                     </NativeSelectOption>
-                                    {ROMANIAN_COUNTIES.map((c) => (
+                                    {availableCounties.map((c) => (
                                         <NativeSelectOption key={c.id} value={c.id}>
                                             {c.name} ({c.id})
                                         </NativeSelectOption>

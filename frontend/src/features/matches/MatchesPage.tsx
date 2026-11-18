@@ -19,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { DashboardView } from "@/components/layout/DashboardSidebar";
 import { getAuthHeaders, getStoredUserId, clearStoredAuth } from "@/lib/auth";
-import { getCountyName } from "@/features/counties/counties";
+import { useCounties, getCountyName } from "@/features/counties/counties";
 
 const API_URL =
     import.meta.env.API_URL || import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -56,6 +56,7 @@ interface HomeItem {
 }
 
 export default function MatchesPage({ onNavigate, onLogout }: MatchesPageProps) {
+    useCounties();
     const [profile, setProfile] = useState<UserProfileData | null>(null);
     const [homes, setHomes] = useState<HomeItem[]>([]);
     const [loading, setLoading] = useState(true);
