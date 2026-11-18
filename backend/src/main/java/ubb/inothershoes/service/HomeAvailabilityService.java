@@ -14,24 +14,19 @@ public class HomeAvailabilityService {
   private final HomeRepository homeRepository;
 
   public HomeAvailabilityService(
-      HomeAvailabilityRepository homeAvailabilityRepository,
-      HomeRepository homeRepository) {
+      HomeAvailabilityRepository homeAvailabilityRepository, HomeRepository homeRepository) {
     this.homeAvailabilityRepository = homeAvailabilityRepository;
     this.homeRepository = homeRepository;
   }
 
-  public void validateAvailability(
-      Long homeId,
-      LocalDate startDate,
-      LocalDate endDate) {
+  public void validateAvailability(Long homeId, LocalDate startDate, LocalDate endDate) {
 
     if (startDate == null || endDate == null) {
       throw new IllegalArgumentException("Start date and end date are required.");
     }
 
     if (!endDate.isAfter(startDate)) {
-      throw new IllegalArgumentException(
-          "End date must be after start date.");
+      throw new IllegalArgumentException("End date must be after start date.");
     }
 
     if (!homeRepository.existsById(homeId)) {
@@ -39,12 +34,10 @@ public class HomeAvailabilityService {
     }
 
     List<HomeAvailability> overlappingPeriods =
-        homeAvailabilityRepository.findOverlappingPeriods(
-            homeId, startDate, endDate);
+        homeAvailabilityRepository.findOverlappingPeriods(homeId, startDate, endDate);
 
     if (!overlappingPeriods.isEmpty()) {
-      throw new IllegalArgumentException(
-          "Availability period overlaps with an existing period.");
+      throw new IllegalArgumentException("Availability period overlaps with an existing period.");
     }
   }
 }

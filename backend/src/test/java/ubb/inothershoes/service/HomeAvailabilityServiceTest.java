@@ -1,4 +1,3 @@
-
 package ubb.inothershoes.service;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,14 +17,11 @@ import ubb.inothershoes.repository.HomeRepository;
 @ExtendWith(MockitoExtension.class)
 class HomeAvailabilityServiceTest {
 
-  @Mock
-  private HomeAvailabilityRepository homeAvailabilityRepository;
+  @Mock private HomeAvailabilityRepository homeAvailabilityRepository;
 
-  @Mock
-  private HomeRepository homeRepository;
+  @Mock private HomeRepository homeRepository;
 
-  @InjectMocks
-  private HomeAvailabilityService homeAvailabilityService;
+  @InjectMocks private HomeAvailabilityService homeAvailabilityService;
 
   private final LocalDate startDate = LocalDate.of(2027, 7, 10);
   private final LocalDate endDate = LocalDate.of(2027, 7, 20);
@@ -33,25 +29,26 @@ class HomeAvailabilityServiceTest {
   @Test
   void validateAvailability_shouldSucceed_whenPeriodIsValid() {
     when(homeRepository.existsById(1L)).thenReturn(true);
-    when(homeAvailabilityRepository.findOverlappingPeriods(
-        1L, startDate, endDate)).thenReturn(List.of());
+    when(homeAvailabilityRepository.findOverlappingPeriods(1L, startDate, endDate))
+        .thenReturn(List.of());
 
-    assertDoesNotThrow(() ->
-        homeAvailabilityService.validateAvailability(1L, startDate, endDate));
+    assertDoesNotThrow(() -> homeAvailabilityService.validateAvailability(1L, startDate, endDate));
   }
 
   @Test
   void validateAvailability_shouldThrowException_whenStartDateIsNull() {
-    assertThrows(IllegalArgumentException.class, () ->
-        homeAvailabilityService.validateAvailability(1L, null, endDate));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> homeAvailabilityService.validateAvailability(1L, null, endDate));
 
     verifyNoInteractions(homeRepository, homeAvailabilityRepository);
   }
 
   @Test
   void validateAvailability_shouldThrowException_whenEndDateIsNull() {
-    assertThrows(IllegalArgumentException.class, () ->
-        homeAvailabilityService.validateAvailability(1L, startDate, null));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> homeAvailabilityService.validateAvailability(1L, startDate, null));
 
     verifyNoInteractions(homeRepository, homeAvailabilityRepository);
   }
@@ -60,9 +57,9 @@ class HomeAvailabilityServiceTest {
   void validateAvailability_shouldThrowException_whenEndDateIsBeforeStartDate() {
     LocalDate invalidEndDate = LocalDate.of(2027, 7, 5);
 
-    assertThrows(IllegalArgumentException.class, () ->
-        homeAvailabilityService.validateAvailability(
-            1L, startDate, invalidEndDate));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> homeAvailabilityService.validateAvailability(1L, startDate, invalidEndDate));
 
     verifyNoInteractions(homeRepository, homeAvailabilityRepository);
   }
@@ -71,8 +68,9 @@ class HomeAvailabilityServiceTest {
   void validateAvailability_shouldThrowException_whenHomeDoesNotExist() {
     when(homeRepository.existsById(1L)).thenReturn(false);
 
-    assertThrows(IllegalArgumentException.class, () ->
-        homeAvailabilityService.validateAvailability(1L, startDate, endDate));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> homeAvailabilityService.validateAvailability(1L, startDate, endDate));
 
     verifyNoInteractions(homeAvailabilityRepository);
   }
@@ -80,11 +78,11 @@ class HomeAvailabilityServiceTest {
   @Test
   void validateAvailability_shouldThrowException_whenPeriodOverlaps() {
     when(homeRepository.existsById(1L)).thenReturn(true);
-    when(homeAvailabilityRepository.findOverlappingPeriods(
-        1L, startDate, endDate))
+    when(homeAvailabilityRepository.findOverlappingPeriods(1L, startDate, endDate))
         .thenReturn(List.of(new HomeAvailability()));
 
-    assertThrows(IllegalArgumentException.class, () ->
-        homeAvailabilityService.validateAvailability(1L, startDate, endDate));
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> homeAvailabilityService.validateAvailability(1L, startDate, endDate));
   }
 }
