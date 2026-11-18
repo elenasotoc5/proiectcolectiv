@@ -9,13 +9,13 @@ import {
     Briefcase,
     User,
     MapPin,
-    Home,
-    Building2,
+    House,
     Sparkles,
     Check,
     X,
     CalendarCheck,
 } from "lucide-react";
+import type { DashboardView } from "@/components/layout/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,11 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+    ROMANIAN_COUNTIES,
+    getCountyName,
+    isValidCountyId,
+} from "@/features/counties/counties";
 
 const API_URL = import.meta.env.API_URL || import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -66,20 +71,17 @@ export interface UserProfile {
     email: string;
     bio: string;
     occupation: string;
-    university?: string;
-    fieldOfStudy?: string;
-    studyYear?: number | null;
     location: string;
-    address: string;
-    housingType: string;
     avatarUrl: string;
     preferences: string[];
     preferredCounties: string[];
     activities: ActivityItem[];
+    hasHome?: boolean;
 }
 
 interface ProfilePageProps {
     onLogout?: () => void;
+    onNavigate?: (view: DashboardView) => void;
 }
 
 const CURATED_PREFERENCES = [
@@ -99,11 +101,6 @@ const ACTIVITY_CATEGORIES = [
     "Local Gems & Neighborhood",
 ];
 
-const AVAILABLE_COUNTIES = [
-    "Cluj", "București", "Timiș", "Sibiu", "Brașov",
-    "Constanța", "Iași", "Bihor", "Prahova", "Argeș"
-];
-
 const EMPTY_PROFILE: UserProfile = {
     userId: 0,
     firstName: "",
@@ -113,8 +110,6 @@ const EMPTY_PROFILE: UserProfile = {
     bio: "",
     occupation: "",
     location: "",
-    address: "",
-    housingType: "Entire Apartment",
     avatarUrl: "",
     preferences: [],
     preferredCounties: [],
@@ -154,15 +149,13 @@ const getProfileSnapshot = (profile: UserProfile) =>
         bio: profile.bio,
         occupation: profile.occupation,
         location: profile.location,
-        address: profile.address,
-        housingType: profile.housingType,
         avatarUrl: profile.avatarUrl,
         preferences: profile.preferences,
         preferredCounties: profile.preferredCounties,
         activities: profile.activities,
     });
 
-export default function ProfilePage({ onLogout }: ProfilePageProps) {
+export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) {
     const [profile, setProfile] = useState<UserProfile>(getInitialProfile);
     const [savedSnapshot, setSavedSnapshot] = useState(
         () => getProfileSnapshot(getInitialProfile())
@@ -172,6 +165,9 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [isUpdatingInfo, setIsUpdatingInfo] = useState(false);
     const [statusMessage, setStatusMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const [hasHome, setHasHome] = useState(false);
+    const [userHomeTitle, setUserHomeTitle] = useState("");
+    const [activeTab, setActiveTab] = useState("overview");
 
     const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
     const [editForm, setEditForm] = useState({
@@ -181,8 +177,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
         bio: "",
         occupation: "",
         location: "",
-        address: "",
-        housingType: "Entire Apartment",
         avatarUrl: "",
     });
 
@@ -200,7 +194,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
     });
 
     const [customTagInput, setCustomTagInput] = useState("");
-    const [countyInput, setCountyInput] = useState("");
 
     useEffect(() => {
         const userIdNum = profile.userId || getStoredUserId();
@@ -211,18 +204,26 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
         const fetchProfile = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`${API_URL}/api/v1/users/${userIdNum}/profile`, {
-                    headers: {
-                        ...getAuthHeaders(),
-                    },
-                });
-                if (response.status === 401) {
+                const [profileRes, homeRes] = await Promise.all([
+                    fetch(`${API_URL}/api/v1/users/${userIdNum}/profile`, {
+                        headers: {
+                            ...getAuthHeaders(),
+                        },
+                    }),
+                    fetch(`${API_URL}/api/v1/homes/mine`, {
+                        headers: {
+                            ...getAuthHeaders(),
+                        },
+                    }).catch(() => null),
+                ]);
+
+                if (profileRes.status === 401) {
                     clearStoredAuth();
                     onLogout?.();
                     return;
                 }
-                if (response.ok) {
-                    const data = await response.json();
+                if (profileRes.ok) {
+                    const data = await profileRes.json();
 
                     const updatedProfile: UserProfile = {
                         ...profile,
@@ -234,15 +235,28 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                         bio: data.bio ?? "",
                         occupation: data.occupation ?? "",
                         location: data.location ?? "",
-                        address: data.address ?? "",
-                        housingType: data.housingType ?? profile.housingType,
                         avatarUrl: data.avatarUrl ?? "",
                         preferences: Array.isArray(data.preferences) ? data.preferences : [],
                         preferredCounties: Array.isArray(data.preferredCounties) ? data.preferredCounties : [],
                         activities: Array.isArray(data.activities) ? data.activities : [],
+                        hasHome: Boolean(data.hasHome),
                     };
                     setProfile(updatedProfile);
                     setSavedSnapshot(getProfileSnapshot(updatedProfile));
+                    if (data.hasHome) {
+                        setHasHome(true);
+                    }
+                }
+
+                if (homeRes && homeRes.ok) {
+                    const homes = await homeRes.json();
+                    if (Array.isArray(homes) && homes.length > 0) {
+                        setHasHome(true);
+                        setUserHomeTitle(homes[0].title || "My Home");
+                    } else if (homeRes.status === 200) {
+                        setHasHome(false);
+                        setUserHomeTitle("");
+                    }
                 }
             } catch (err) {
                 console.warn("Could not fetch profile from backend:", err);
@@ -278,30 +292,17 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
         setCustomTagInput("");
     };
 
-    const handleAddCounty = (county: string) => {
-        const trimmed = county.trim();
-        if (!trimmed) return;
-
-        if (profile.preferredCounties.includes(trimmed)) {
-            setStatusMessage({
-                type: "error",
-                text: `County "${trimmed}" is already added to the list.`
-            });
-            return;
-        }
-
-        setProfile((prev) => ({
-            ...prev,
-            preferredCounties: [...prev.preferredCounties, trimmed]
-        }));
-        setStatusMessage(null);
-    };
-
-    const handleRemoveCounty = (countyToRemove: string) => {
-        setProfile((prev) => ({
-            ...prev,
-            preferredCounties: prev.preferredCounties.filter(c => c !== countyToRemove)
-        }));
+    const handleTogglePreferredCounty = (code: string) => {
+        if (!code || !isValidCountyId(code)) return;
+        const normalized = code.trim().toUpperCase();
+        setProfile((prev) => {
+            const current = prev.preferredCounties || [];
+            const exists = current.includes(normalized);
+            const next = exists
+                ? current.filter((c) => c !== normalized)
+                : [...current, normalized];
+            return { ...prev, preferredCounties: next };
+        });
         setStatusMessage(null);
     };
 
@@ -313,8 +314,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
             bio: profile.bio,
             occupation: profile.occupation || "",
             location: profile.location,
-            address: profile.address || "",
-            housingType: profile.housingType || "Entire Apartment",
             avatarUrl: profile.avatarUrl || "",
         });
         setIsEditProfileOpen(true);
@@ -338,8 +337,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
         const newBio = editForm.bio.trim();
         const newOccupation = editForm.occupation.trim();
         const newLocation = editForm.location.trim();
-        const newAddress = editForm.address.trim();
-        const newHousingType = editForm.housingType;
         const newAvatarUrl = editForm.avatarUrl.trim();
 
         setIsUpdatingInfo(true);
@@ -359,8 +356,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                     bio: newBio,
                     occupation: newOccupation,
                     location: newLocation,
-                    address: newAddress,
-                    housingType: newHousingType,
                     avatarUrl: newAvatarUrl,
                     preferences: profile.preferences,
                     preferredCounties: profile.preferredCounties,
@@ -402,8 +397,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                 bio: data?.bio ?? newBio,
                 occupation: data?.occupation ?? newOccupation,
                 location: data?.location ?? newLocation,
-                address: data?.address ?? newAddress,
-                housingType: data?.housingType ?? newHousingType,
                 avatarUrl: data?.avatarUrl ?? newAvatarUrl,
                 preferences: Array.isArray(data?.preferences)
                     ? data.preferences
@@ -417,6 +410,7 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
             };
             setProfile(updatedProfile);
             setSavedSnapshot(getProfileSnapshot(updatedProfile));
+
 
             setStatusMessage({
                 type: "success",
@@ -514,10 +508,10 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
             return;
         }
 
-        if (!profile.location?.trim() || !profile.housingType?.trim() || !profile.address?.trim()) {
+        if (!profile.location?.trim()) {
             setStatusMessage({
                 type: "error",
-                text: "Please provide your city, home address, and housing details before matching.",
+                text: "Please provide your city & country before matching.",
             });
             return;
         }
@@ -537,8 +531,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                     bio: profile.bio,
                     occupation: profile.occupation,
                     location: profile.location,
-                    address: profile.address,
-                    housingType: profile.housingType,
                     avatarUrl: profile.avatarUrl,
                     preferences: profile.preferences,
                     preferredCounties: profile.preferredCounties,
@@ -559,10 +551,22 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                 throw new Error(errData?.message || "Failed to save profile changes.");
             }
             setSavedSnapshot(getProfileSnapshot(profile));
-            setStatusMessage({
-                type: "success",
-                text: "Profile saved successfully! Your profile is ready for Life Swap matching.",
-            });
+            if (hasHome && hasEnoughPreferences && hasEnoughActivities && hasLocation) {
+                setStatusMessage({
+                    type: "success",
+                    text: "Profile saved successfully! Your profile is ready for Life Swap matching.",
+                });
+            } else {
+                const missing = [
+                    !hasHome ? "home" : null,
+                    !hasEnoughPreferences ? "preferences (need at least 3)" : null,
+                    !hasEnoughActivities ? "host activities (need at least 1)" : null,
+                ].filter(Boolean);
+                setStatusMessage({
+                    type: "success",
+                    text: `Profile saved successfully! Note: You can't match yet because you didn't add your ${missing.join(" or ")}.`,
+                });
+            }
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : "Could not connect to backend server.";
             setStatusMessage({
@@ -576,12 +580,8 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
 
     const hasEnoughPreferences = profile.preferences.length >= 3;
     const hasEnoughActivities = profile.activities.length >= 1;
-    const hasHomeDetails = Boolean(
-        profile.location?.trim() &&
-        profile.housingType?.trim() &&
-        profile.address?.trim()
-    );
-    const isReadyForMatching = hasEnoughPreferences && hasEnoughActivities && hasHomeDetails;
+    const hasLocation = Boolean(profile.location?.trim());
+    const isReadyForMatching = hasHome && hasEnoughPreferences && hasEnoughActivities && hasLocation;
 
     return (
         <main className="min-h-screen bg-background text-foreground pb-20">
@@ -590,6 +590,8 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                     <h1 className="text-2xl font-bold tracking-tight">
                         My Profile
                     </h1>
+
+
                 </div>
             </header>
 
@@ -610,7 +612,7 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                     </Alert>
                 )}
 
-                <Tabs defaultValue="overview" className="w-full">
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="mb-6">
                         <TabsTrigger value="overview">
                             Overview
@@ -633,23 +635,23 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-lg flex items-center gap-2">
-                                            {isReadyForMatching ? "Profile Ready for Matching!" : "Complete Profile to Enable Matching"}
+                                            {isReadyForMatching ? "Profile Ready for Matching!" : "Complete Requirements to Enable Matching"}
                                             {isReadyForMatching && (
                                                 <Badge variant="default" className="bg-green-600 text-white">Active</Badge>
                                             )}
                                         </h3>
                                         <p className="text-sm text-muted-foreground">
                                             {isReadyForMatching
-                                                ? "Your profile has all required home details, preferences, and activities for life swap pairing."
-                                                : "Profiles need home details (city, address, housing), at least 3 preferences, and 1 host activity to enable matching."}
+                                                ? "Your profile has home, preferences, and host activities set for life swap pairing."
+                                                : "You can't match because you didn't add your home, preferences, or host activities."}
                                         </p>
                                     </div>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-2 text-sm font-medium self-end sm:self-center">
-                                    <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasHomeDetails ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-destructive/15 text-destructive border border-destructive/30 font-medium"}`}>
-                                        {hasHomeDetails ? <Check className="size-3" /> : <AlertCircle className="size-3 text-destructive" />}
-                                        {hasHomeDetails ? "Home Details Set" : "Home Details Missing (Required)"}
+                                    <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasHome ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-destructive/15 text-destructive border border-destructive/30 font-medium"}`}>
+                                        {hasHome ? <Check className="size-3" /> : <AlertCircle className="size-3 text-destructive" />}
+                                        {hasHome ? "Home Added" : "Home Missing (Required)"}
                                     </span>
                                     <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasEnoughPreferences ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>
                                         {hasEnoughPreferences ? <Check className="size-3" /> : <AlertCircle className="size-3" />}
@@ -659,9 +661,81 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                                         {hasEnoughActivities ? <Check className="size-3" /> : <AlertCircle className="size-3" />}
                                         {profile.activities.length}/1 Activity
                                     </span>
+                                    <span className={`px-2.5 py-1 rounded-full text-xs flex items-center gap-1 ${hasLocation ? "bg-green-500/20 text-green-700 dark:text-green-300" : "bg-destructive/15 text-destructive border border-destructive/30 font-medium"}`}>
+                                        {hasLocation ? <Check className="size-3" /> : <AlertCircle className="size-3 text-destructive" />}
+                                        {hasLocation ? "Location Set" : "Location Missing"}
+                                    </span>
                                 </div>
                             </CardContent>
                         </Card>
+
+                        {!isReadyForMatching && (
+                            <div className="flex flex-col gap-3 p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-sm">
+                                <div className="flex items-center gap-2 font-semibold text-destructive">
+                                    <AlertCircle className="size-4 shrink-0 text-destructive" />
+                                    <span>
+                                        You can't match because you didn't add your {[
+                                            !hasHome ? "home" : null,
+                                            !hasEnoughPreferences ? "preferences" : null,
+                                            !hasEnoughActivities ? "host activities" : null,
+                                        ].filter(Boolean).join(", ")}.
+                                    </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    Complete the missing requirements below to activate matching with swap partners:
+                                </p>
+                                <div className="grid gap-2.5 sm:grid-cols-3 pt-1">
+                                    <div className={`p-3 rounded-lg border text-xs flex flex-col justify-between gap-2.5 ${hasHome ? "bg-background/80 border-border" : "bg-background border-destructive/30 shadow-sm"}`}>
+                                        <div>
+                                            <div className="flex items-center gap-2 font-medium">
+                                                <House className={`size-4 ${hasHome ? "text-green-600" : "text-destructive"}`} />
+                                                <span>1. Home Listing</span>
+                                            </div>
+                                            <p className="text-muted-foreground text-[11px] mt-1">
+                                                {hasHome ? (userHomeTitle || "Home listing added") : "Add your home so partners know where they'll stay."}
+                                            </p>
+                                        </div>
+                                        {!hasHome && onNavigate && (
+                                            <Button size="sm" variant="default" className="w-full h-7 text-xs font-semibold" onClick={() => onNavigate("my-home")}>
+                                                Add Home
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div className={`p-3 rounded-lg border text-xs flex flex-col justify-between gap-2.5 ${hasEnoughPreferences ? "bg-background/80 border-border" : "bg-background border-amber-500/30 shadow-sm"}`}>
+                                        <div>
+                                            <div className="flex items-center gap-2 font-medium">
+                                                <Sparkles className={`size-4 ${hasEnoughPreferences ? "text-green-600" : "text-amber-600"}`} />
+                                                <span>2. Preferences ({profile.preferences.length}/3)</span>
+                                            </div>
+                                            <p className="text-muted-foreground text-[11px] mt-1">
+                                                {hasEnoughPreferences ? "Preferences selected" : "Choose at least 3 preferences to define your vibe."}
+                                            </p>
+                                        </div>
+                                        {!hasEnoughPreferences && (
+                                            <Button size="sm" variant="outline" className="w-full h-7 text-xs font-semibold" onClick={() => setActiveTab("preferences")}>
+                                                Set Preferences
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div className={`p-3 rounded-lg border text-xs flex flex-col justify-between gap-2.5 ${hasEnoughActivities ? "bg-background/80 border-border" : "bg-background border-amber-500/30 shadow-sm"}`}>
+                                        <div>
+                                            <div className="flex items-center gap-2 font-medium">
+                                                <CalendarCheck className={`size-4 ${hasEnoughActivities ? "text-green-600" : "text-amber-600"}`} />
+                                                <span>3. Host Activities ({profile.activities.length}/1)</span>
+                                            </div>
+                                            <p className="text-muted-foreground text-[11px] mt-1">
+                                                {hasEnoughActivities ? "Activity ready" : "Add at least 1 host activity or local insider tip."}
+                                            </p>
+                                        </div>
+                                        {!hasEnoughActivities && (
+                                            <Button size="sm" variant="outline" className="w-full h-7 text-xs font-semibold" onClick={() => setActiveTab("activities")}>
+                                                Add Activity
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <Card className="overflow-hidden">
                             <div className="h-28 bg-gradient-to-r from-primary/30 via-primary/10 to-accent" />
@@ -713,32 +787,14 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                                             <span className="text-destructive font-semibold text-[11px]">(Required)</span>
                                         )}
                                     </div>
-                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${!profile.address?.trim() ? "bg-destructive/10 text-destructive border border-destructive/30 font-medium" : "bg-muted text-muted-foreground"}`}>
-                                        <Building2 className={`size-3.5 ${!profile.address?.trim() ? "text-destructive" : "text-primary"}`} />
-                                        <span>{profile.address || "Address not set"}</span>
-                                        {!profile.address?.trim() && (
-                                            <span className="text-destructive font-semibold text-[11px]">(Required)</span>
-                                        )}
-                                    </div>
-                                    <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${!profile.housingType?.trim() ? "bg-destructive/10 text-destructive border border-destructive/30 font-medium" : "bg-muted text-muted-foreground"}`}>
-                                        <Home className={`size-3.5 ${!profile.housingType?.trim() ? "text-destructive" : "text-primary"}`} />
-                                        <span>{profile.housingType || "Housing not set"}</span>
-                                        {!profile.housingType?.trim() && (
-                                            <span className="text-destructive font-semibold text-[11px]">(Required)</span>
-                                        )}
-                                    </div>
                                 </div>
 
-                                {!hasHomeDetails && (
+                                {!hasLocation && (
                                     <div className="flex items-center gap-2 text-xs text-destructive font-medium bg-destructive/10 border border-destructive/20 px-3.5 py-2 rounded-xl mb-4">
                                         <AlertCircle className="size-4 shrink-0 text-destructive" />
                                         <span>
-                                            <strong>Required fields missing:</strong> {[
-                                            !profile.location?.trim() ? "City & Country" : null,
-                                            !profile.address?.trim() ? "Home Address" : null,
-                                            !profile.housingType?.trim() ? "Housing Arrangement" : null,
-                                        ].filter(Boolean).join(", ")}. Please edit info to complete these details before matching.
-                                        </span>
+                                <strong>Required field missing:</strong> City & Country. Please edit info to complete this before matching.
+                            </span>
                                     </div>
                                 )}
 
@@ -751,61 +807,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                     </TabsContent>
 
                     <TabsContent value="preferences" className="space-y-6">
-                        {/* Preferred Counties Section */}
-                        <Card>
-                            <CardHeader className="pb-3">
-                                <CardTitle className="text-xl flex items-center gap-2">
-                                    <MapPin className="size-5 text-primary" />
-                                    Preferred Counties for Local Life
-                                </CardTitle>
-                                <CardDescription>
-                                    Select multiple counties where you would like to experience local life.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex flex-wrap gap-2 min-h-[50px] p-3 rounded-xl bg-muted/40 border border-border items-center">
-                                    {profile.preferredCounties.length === 0 ? (
-                                        <p className="text-sm text-muted-foreground italic">No counties selected yet.</p>
-                                    ) : (
-                                        profile.preferredCounties.map(county => (
-                                            <Badge key={county} variant="secondary" className="px-3 py-1.5 text-sm gap-2 bg-primary/10 text-primary border border-primary/20">
-                                                {county}
-                                                <X
-                                                    className="size-3.5 cursor-pointer hover:text-destructive"
-                                                    onClick={() => handleRemoveCounty(county)}
-                                                />
-                                            </Badge>
-                                        ))
-                                    )}
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <NativeSelect
-                                        value={countyInput}
-                                        onChange={(e) => setCountyInput(e.target.value)}
-                                    >
-                                        <NativeSelectOption value="">Choose a county...</NativeSelectOption>
-                                        {AVAILABLE_COUNTIES.map(c => (
-                                            <NativeSelectOption key={c} value={c}>{c}</NativeSelectOption>
-                                        ))}
-                                    </NativeSelect>
-                                    <Button
-                                        type="button"
-                                        variant="secondary"
-                                        onClick={() => {
-                                            if (countyInput) {
-                                                handleAddCounty(countyInput);
-                                                setCountyInput("");
-                                            }
-                                        }}
-                                    >
-                                        <Plus className="size-4 mr-1" /> Add
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Existing Preferences & Interests Section */}
                         <Card>
                             <CardHeader className="pb-3">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -894,6 +895,88 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                                         <Plus className="size-4" /> Add Tag
                                     </Button>
                                 </form>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <CardTitle className="text-xl flex items-center gap-2">
+                                            <MapPin className="size-5 text-primary" />
+                                            Preferred Swap Destinations
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Choose the Romanian counties and Bucharest where you are looking to swap homes.
+                                        </CardDescription>
+                                    </div>
+                                    <Badge
+                                        variant="outline"
+                                        className={
+                                            profile.preferredCounties.length > 0
+                                                ? "border-primary text-primary"
+                                                : "border-muted-foreground/40 text-muted-foreground"
+                                        }
+                                    >
+                                        {profile.preferredCounties.length} selected
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="space-y-5 pt-2">
+                                <div className="p-4 rounded-xl bg-muted/40 border border-border/60">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
+                                        Your Target Swap Counties ({profile.preferredCounties.length})
+                                    </p>
+                                    {profile.preferredCounties.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            No destination counties selected yet. Choose a county below to indicate your preferred swap locations.
+                                        </p>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.preferredCounties.map((code) => (
+                                                <Badge
+                                                    key={code}
+                                                    variant="secondary"
+                                                    className="px-3 py-1.5 text-sm font-medium gap-1.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 cursor-pointer"
+                                                    onClick={() => handleTogglePreferredCounty(code)}
+                                                >
+                                                    📍 {getCountyName(code)} ({code})
+                                                    <X className="size-3.5 hover:text-destructive" />
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="addCountySelect">Add Preferred County</Label>
+                                    <div className="flex max-w-md items-center gap-2">
+                                        <NativeSelect
+                                            id="addCountySelect"
+                                            value=""
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    handleTogglePreferredCounty(e.target.value);
+                                                }
+                                            }}
+                                        >
+                                            <NativeSelectOption value="">
+                                                + Select a Romanian county or Bucharest...
+                                            </NativeSelectOption>
+                                            {ROMANIAN_COUNTIES
+                                                .filter((c) => !profile.preferredCounties.includes(c.id))
+                                                .map((c) => (
+                                                    <NativeSelectOption key={c.id} value={c.id}>
+                                                        {c.name} ({c.id})
+                                                    </NativeSelectOption>
+                                                ))}
+                                        </NativeSelect>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Duplicate county selections are automatically prevented.
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
 
@@ -995,12 +1078,13 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                             <div className="flex items-center gap-2 text-sm text-destructive font-medium">
                                 <AlertCircle className="size-5 shrink-0" />
                                 <span>
-                                    Needs: {[
-                                    !hasHomeDetails ? "home details (city, address, housing)" : null,
+                                Can't match yet — Needs: {[
+                                    !hasHome ? "home" : null,
                                     profile.preferences.length < 3 ? `${3 - profile.preferences.length} more preference(s)` : null,
-                                    profile.activities.length < 1 ? "1 activity" : null,
+                                    profile.activities.length < 1 ? "1 host activity" : null,
+                                    !hasLocation ? "city & country" : null,
                                 ].filter(Boolean).join(", ")}
-                                </span>
+                            </span>
                             </div>
                         )}
                     </div>
@@ -1022,7 +1106,7 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                     <DialogHeader>
                         <DialogTitle>Edit Profile Information</DialogTitle>
                         <DialogDescription>
-                            Update your personal details, occupation, and housing info visible to prospective swap partners.
+                            Update your personal details and location visible to prospective swap partners.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -1102,42 +1186,6 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
                                 />
                                 {!editForm.location.trim() && (
                                     <p className="text-xs text-destructive font-medium">City & Country is required</p>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label htmlFor="address">Home Address / Street <span className="text-destructive">*</span></Label>
-                                <Input
-                                    id="address"
-                                    placeholder="e.g. Strada Memorandumului 21"
-                                    value={editForm.address}
-                                    onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
-                                    required
-                                    className={!editForm.address.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
-                                />
-                                {!editForm.address.trim() && (
-                                    <p className="text-xs text-destructive font-medium">Home address is required</p>
-                                )}
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label htmlFor="housingType">Housing Arrangement <span className="text-destructive">*</span></Label>
-                                <NativeSelect
-                                    id="housingType"
-                                    value={editForm.housingType}
-                                    onChange={(e) => setEditForm({ ...editForm, housingType: e.target.value })}
-                                    className={!editForm.housingType?.trim() ? "border-destructive focus-visible:ring-destructive" : ""}
-                                >
-                                    <NativeSelectOption value="Entire Apartment">Entire Apartment</NativeSelectOption>
-                                    <NativeSelectOption value="Private Room in Shared Apartment">Private Room in Shared Apartment</NativeSelectOption>
-                                    <NativeSelectOption value="Studio Apartment">Studio Apartment</NativeSelectOption>
-                                    <NativeSelectOption value="House / Villa">House / Villa</NativeSelectOption>
-                                    <NativeSelectOption value="Townhouse / Loft">Townhouse / Loft</NativeSelectOption>
-                                    <NativeSelectOption value="Suburban Home with Garden">Suburban Home with Garden</NativeSelectOption>
-                                </NativeSelect>
-                                {!editForm.housingType?.trim() && (
-                                    <p className="text-xs text-destructive font-medium">Housing arrangement is required</p>
                                 )}
                             </div>
                         </div>
@@ -1227,4 +1275,5 @@ export default function ProfilePage({ onLogout }: ProfilePageProps) {
             </Dialog>
         </main>
     );
+
 }
