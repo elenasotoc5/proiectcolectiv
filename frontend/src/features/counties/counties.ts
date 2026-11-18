@@ -1,3 +1,5 @@
+import { useState, useEffect } from "react";
+
 export interface County {
     id: string; 
     name: string;
@@ -50,38 +52,111 @@ export const ROMANIAN_COUNTIES: readonly County[] = [
 
 export type CountyId = (typeof ROMANIAN_COUNTIES)[number]["id"];
 
-export const COUNTY_BY_ID: ReadonlyMap<string, County> = new Map(
+const countyMap: Map<string, County> = new Map(
     ROMANIAN_COUNTIES.map((c) => [c.id.toUpperCase(), c])
 );
 
+export const COUNTY_BY_ID: ReadonlyMap<string, County> = countyMap;
+
+function updateCountyMap(counties: County[]) {
+    countyMap.clear();
+    for (const c of counties) {
+        countyMap.set(c.id.toUpperCase(), c);
+    }
+}
+
+const API_URL = import.meta.env.API_URL || import.meta.env.VITE_API_URL || "http://localhost:8080";
+const COUNTIES_STORAGE_KEY = "lifeswap_counties_cache";
+
+let cachedCounties: County[] | null = null;
+let countiesPromise: Promise<County[]> | null = null;
+
+// Initialize from sessionStorage if available
+try {
+    if (typeof window !== "undefined") {
+        const stored = sessionStorage.getItem(COUNTIES_STORAGE_KEY);
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                cachedCounties = parsed;
+                updateCountyMap(parsed);
+            }
+        }
+    }
+} catch {
+    // Ignore storage parse issues
+}
+
+export function getCounties(): County[] {
+    return cachedCounties ? [...cachedCounties] : [...ROMANIAN_COUNTIES];
+}
+
+export async function fetchCounties(): Promise<County[]> {
+    if (cachedCounties) {
+        return cachedCounties;
+    }
+    if (countiesPromise) {
+        return countiesPromise;
+    }
+
+    countiesPromise = (async () => {
+        try {
+            const response = await fetch(`${API_URL}/api/v1/counties`);
+            if (response.ok) {
+                const data: County[] = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    cachedCounties = data;
+                    updateCountyMap(data);
+                    try {
+                        if (typeof window !== "undefined") {
+                            sessionStorage.setItem(COUNTIES_STORAGE_KEY, JSON.stringify(data));
+                        }
+                    } catch {
+                        // Ignore storage write issues
+                    }
+                    return data;
+                }
+            }
+        } catch (err) {
+            console.warn("Failed to fetch counties from backend, falling back to static list:", err);
+        } finally {
+            countiesPromise = null;
+        }
+
+        if (!cachedCounties) {
+            cachedCounties = [...ROMANIAN_COUNTIES];
+            updateCountyMap(cachedCounties);
+        }
+        return cachedCounties;
+    })();
+
+    return countiesPromise;
+}
+
 export function isValidCountyId(id: string | null | undefined): boolean {
     if (!id) return false;
-    return COUNTY_BY_ID.has(id.trim().toUpperCase());
+    return countyMap.has(id.trim().toUpperCase());
 }
 
 export function getCountyName(id: string | null | undefined): string {
     if (!id) return "";
-    return COUNTY_BY_ID.get(id.trim().toUpperCase())?.name || id;
+    return countyMap.get(id.trim().toUpperCase())?.name || id;
 }
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
-let cachedFetchedCounties: County[] | null = null;
+export function useCounties(): County[] {
+    const [counties, setCounties] = useState<County[]>(() => getCounties());
 
-export async function fetchCounties(): Promise<County[]> {
-    if (cachedFetchedCounties) {
-        return cachedFetchedCounties;
-    }
-    try {
-        const response = await fetch(`${API_URL}/api/v1/counties`);
-        if (response.ok) {
-            const data: County[] = await response.json();
-            if (Array.isArray(data) && data.length > 0) {
-                cachedFetchedCounties = data;
-                return data;
+    useEffect(() => {
+        let isMounted = true;
+        fetchCounties().then((data) => {
+            if (isMounted) {
+                setCounties(data);
             }
-        }
-    } catch {}
-    
-    cachedFetchedCounties = [...ROMANIAN_COUNTIES];
-    return cachedFetchedCounties;
+        });
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    return counties;
 }

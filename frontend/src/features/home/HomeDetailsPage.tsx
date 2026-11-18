@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getAuthHeaders } from "@/lib/auth";
 import { HomePhotoGallery } from "@/features/home/HomePhotos";
-import { getCountyName } from "@/features/counties/counties";
+import { useCounties, getCountyName } from "@/features/counties/counties";
 
 const API_URL =
     import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -53,6 +53,7 @@ export default function HomeDetailsPage({
                                             onEdit,
                                             onDelete,
                                         }: HomeDetailsPageProps) {
+    useCounties();
     const [home, setHome] = useState<Home | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");

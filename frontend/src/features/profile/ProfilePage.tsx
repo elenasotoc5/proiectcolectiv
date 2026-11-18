@@ -49,7 +49,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import {
-    ROMANIAN_COUNTIES,
+    useCounties,
     getCountyName,
     isValidCountyId,
 } from "@/features/counties/counties";
@@ -156,6 +156,7 @@ const getProfileSnapshot = (profile: UserProfile) =>
     });
 
 export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) {
+    const availableCounties = useCounties();
     const [profile, setProfile] = useState<UserProfile>(getInitialProfile);
     const [savedSnapshot, setSavedSnapshot] = useState(
         () => getProfileSnapshot(getInitialProfile())
@@ -964,7 +965,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                                             <NativeSelectOption value="">
                                                 + Select a Romanian county or Bucharest...
                                             </NativeSelectOption>
-                                            {ROMANIAN_COUNTIES
+                                            {availableCounties
                                                 .filter((c) => !profile.preferredCounties.includes(c.id))
                                                 .map((c) => (
                                                     <NativeSelectOption key={c.id} value={c.id}>
