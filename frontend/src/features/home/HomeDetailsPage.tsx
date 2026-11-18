@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getAuthHeaders } from "@/lib/auth";
 import { HomePhotoGallery } from "@/features/home/HomePhotos";
+import { getCountyName } from "@/features/counties/counties";
 
 const API_URL =
     import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -29,6 +30,7 @@ interface Home {
     ownerId: number;
     title: string;
     city: string;
+    county?: string;
     address?: string | null;
     description: string;
     housingType: string;
@@ -151,7 +153,7 @@ export default function HomeDetailsPage({
 
                     <p className="mt-2 flex items-center gap-2 text-muted-foreground">
                         <MapPin className="size-4" />
-                        {home.city}
+                        {home.city}{home.county ? `, ${getCountyName(home.county)} (${home.county})` : ""}
                     </p>
                 </div>
 
