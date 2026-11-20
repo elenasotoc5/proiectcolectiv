@@ -16,6 +16,7 @@ import {
     CalendarCheck,
 } from "lucide-react";
 import type { DashboardView } from "@/components/layout/DashboardSidebar";
+import RomaniaCountyMap from "@/features/counties/RomaniaCountyMap";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -493,30 +494,6 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
             return;
         }
 
-        if (profile.preferences.length < 3) {
-            setStatusMessage({
-                type: "error",
-                text: "Please select at least 3 matching preferences before saving.",
-            });
-            return;
-        }
-
-        if (profile.activities.length < 1) {
-            setStatusMessage({
-                type: "error",
-                text: "Please add at least 1 host activity that your swap partner can experience.",
-            });
-            return;
-        }
-
-        if (!profile.location?.trim()) {
-            setStatusMessage({
-                type: "error",
-                text: "Please provide your city & country before matching.",
-            });
-            return;
-        }
-
         setIsSaving(true);
         try {
             const response = await fetch(`${API_URL}/api/v1/users/${userId}/profile`, {
@@ -558,21 +535,16 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                     text: "Profile saved successfully! Your profile is ready for Life Swap matching.",
                 });
             } else {
-                const missing = [
-                    !hasHome ? "home" : null,
-                    !hasEnoughPreferences ? "preferences (need at least 3)" : null,
-                    !hasEnoughActivities ? "host activities (need at least 1)" : null,
-                ].filter(Boolean);
                 setStatusMessage({
                     type: "success",
-                    text: `Profile saved successfully! Note: You can't match yet because you didn't add your ${missing.join(" or ")}.`,
+                    text: "Profile changes saved successfully. Complete the remaining requirements when you're ready to match.",
                 });
             }
         } catch (err: unknown) {
             const errorMsg = err instanceof Error ? err.message : "Could not connect to backend server.";
             setStatusMessage({
                 type: "error",
-                text: `${errorMsg} (Saved in local preview)`,
+                text: errorMsg,
             });
         } finally {
             setIsSaving(false);
@@ -676,10 +648,10 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                                     <AlertCircle className="size-4 shrink-0 text-destructive" />
                                     <span>
                                         You can't match because you didn't add your {[
-                                            !hasHome ? "home" : null,
-                                            !hasEnoughPreferences ? "preferences" : null,
-                                            !hasEnoughActivities ? "host activities" : null,
-                                        ].filter(Boolean).join(", ")}.
+                                        !hasHome ? "home" : null,
+                                        !hasEnoughPreferences ? "preferences" : null,
+                                        !hasEnoughActivities ? "host activities" : null,
+                                    ].filter(Boolean).join(", ")}.
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -925,6 +897,13 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                             </CardHeader>
 
                             <CardContent className="space-y-5 pt-2">
+                                <RomaniaCountyMap
+                                    selectedCounties={profile.preferredCounties}
+                                    onChange={(counties) => {
+                                        setProfile((prev) => ({ ...prev, preferredCounties: counties }));
+                                        setStatusMessage(null);
+                                    }}
+                                />
                                 <div className="p-4 rounded-xl bg-muted/40 border border-border/60">
                                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
                                         Your Target Swap Counties ({profile.preferredCounties.length})
@@ -951,31 +930,35 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="addCountySelect">Add Preferred County</Label>
-                                    <div className="flex max-w-md items-center gap-2">
-                                        <NativeSelect
-                                            id="addCountySelect"
-                                            value=""
-                                            onChange={(e) => {
-                                                if (e.target.value) {
-                                                    handleTogglePreferredCounty(e.target.value);
-                                                }
-                                            }}
-                                        >
-                                            <NativeSelectOption value="">
-                                                + Select a Romanian county or Bucharest...
-                                            </NativeSelectOption>
-                                            {availableCounties
-                                                .filter((c) => !profile.preferredCounties.includes(c.id))
-                                                .map((c) => (
-                                                    <NativeSelectOption key={c.id} value={c.id}>
-                                                        {c.name} ({c.id})
-                                                    </NativeSelectOption>
-                                                ))}
-                                        </NativeSelect>
-                                    </div>
+                                    <Label>Preferred Counties (Multi-select)</Label>
+                                    <details className="group max-w-md rounded-lg border border-border bg-background">
+                                        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                                            <span>
+                                                {profile.preferredCounties.length === 0
+                                                    ? "Select Romanian counties or Bucharest..."
+                                                    : `${profile.preferredCounties.length} counties selected`}
+                                            </span>
+                                            <span aria-hidden="true" className="text-muted-foreground transition-transform group-open:rotate-180">⌄</span>
+                                        </summary>
+                                        <div className="max-h-64 overflow-y-auto border-t border-border p-2" role="group" aria-label="Romanian counties">
+                                            {availableCounties.map((county) => (
+                                                <label
+                                                    key={county.id}
+                                                    className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        className="size-4 accent-primary"
+                                                        checked={profile.preferredCounties.includes(county.id)}
+                                                        onChange={() => handleTogglePreferredCounty(county.id)}
+                                                    />
+                                                    <span>{county.name} ({county.id})</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </details>
                                     <p className="text-xs text-muted-foreground">
-                                        Duplicate county selections are automatically prevented.
+                                        Select multiple counties using the checkboxes or the map. Changes are saved only when you click Save Changes.
                                     </p>
                                 </div>
                             </CardContent>
