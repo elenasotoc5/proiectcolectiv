@@ -7,4 +7,6 @@ import ubb.inothershoes.entity.Home;
 public interface HomeRepository extends JpaRepository<Home, Long> {
 
   List<Home> findByOwnerId(Long ownerId);
+
+  List<Home> findByCountyIgnoreCase(String county);
 }

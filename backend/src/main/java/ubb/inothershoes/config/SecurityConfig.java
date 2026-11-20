@@ -51,17 +51,17 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http.cors(Customizer.withDefaults())
-        .csrf(csrf -> csrf.disable())
-        .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
-        .authorizeHttpRequests(auth ->
-            auth.requestMatchers("/api/v1/auth/**", "/api/v1/health", "/api/v1/counties", "/error")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/homes/*/photos/*/image")
-                .permitAll()
-                .anyRequest()
-                .authenticated())
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
+            .authorizeHttpRequests(auth ->
+                    auth.requestMatchers("/api/v1/auth/**", "/api/v1/health", "/api/v1/counties", "/error")
+                            .permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/v1/homes", "/api/v1/homes/*", "/api/v1/homes/**")
+                            .permitAll()
+                            .anyRequest()
+                            .authenticated())
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
