@@ -161,6 +161,31 @@ paths:
                 $ref: "./models.yaml#/components/schemas/ErrorResponse"
 
   /api/v1/homes:
+    get:
+      summary: Get all homes with optional county filter
+      operationId: getAllHomes
+      tags:
+        - Homes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: county
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Homes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "./models.yaml#/components/schemas/HomeResponse"
+        "401":
+          description: Authentication required
+
     post:
       summary: Create a new home listing
       operationId: createHome
