@@ -20,6 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { getAuthHeaders } from "@/lib/auth";
 import { HomePhotoGallery } from "@/features/home/HomePhotos";
+import HomeAvailabilityCalendar from "@/features/home/HomeAvailabilityCalendar";
 import { useCounties, getCountyName } from "@/features/counties/counties";
 
 const API_URL =
@@ -181,6 +182,10 @@ export default function HomeDetailsPage({
             </div>
 
             <HomePhotoGallery homeId={homeId} />
+
+            {isOwner && (
+                <HomeAvailabilityCalendar homeId={homeId} />
+            )}
 
             <div className="grid gap-6 lg:grid-cols-3">
                 <div className="space-y-6 lg:col-span-2">
