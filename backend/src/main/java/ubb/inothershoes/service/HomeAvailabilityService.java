@@ -4,12 +4,14 @@ package ubb.inothershoes.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+
 import ubb.inothershoes.entity.Home;
 import ubb.inothershoes.entity.HomeAvailability;
 import ubb.inothershoes.model.CreateHomeAvailabilityRequest;
@@ -34,10 +36,13 @@ public class HomeAvailabilityService {
   @Transactional(readOnly = true)
   public List<HomeAvailabilityResponse> getHomeAvailability(Long homeId) {
 
-    getOwnedHome(homeId);
+    if (!homeRepository.existsById(homeId)) {
+      throw new ResponseStatusException(
+          HttpStatus.NOT_FOUND, "Home not found.");
+    }
 
     List<HomeAvailability> availabilities =
-        homeAvailabilityRepository.findByHome_Id(homeId);
+        homeAvailabilityRepository.findByHome_IdOrderByStartDateAsc(homeId);
 
     List<HomeAvailabilityResponse> responses = new ArrayList<>();
 
@@ -104,37 +109,6 @@ public class HomeAvailabilityService {
 
     return toResponse(updated);
   }
-
-
-
-public void validateAvailability(
-    Long homeId,
-    LocalDate startDate,
-    LocalDate endDate) {
-
-  if (startDate == null || endDate == null) {
-    throw new IllegalArgumentException(
-        "Start date and end date are required.");
-  }
-
-  if (!endDate.isAfter(startDate)) {
-    throw new IllegalArgumentException(
-        "End date must be after start date.");
-  }
-
-  if (!homeRepository.existsById(homeId)) {
-    throw new IllegalArgumentException("Home does not exist.");
-  }
-
-  List<HomeAvailability> overlappingPeriods =
-      homeAvailabilityRepository.findOverlappingPeriods(
-          homeId, startDate, endDate);
-
-  if (!overlappingPeriods.isEmpty()) {
-    throw new IllegalArgumentException(
-        "Availability period overlaps with an existing period.");
-  }
-}
 
   @Transactional
   public void deleteHomeAvailability(Long homeId, Long availabilityId) {
