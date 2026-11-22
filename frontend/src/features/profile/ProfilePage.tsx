@@ -48,6 +48,11 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import {
+    useCounties,
+    getCountyName,
+    isValidCountyId,
+} from "@/features/counties/counties";
 
 const API_URL = import.meta.env.API_URL || import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -66,12 +71,10 @@ export interface UserProfile {
     email: string;
     bio: string;
     occupation: string;
-    university?: string;
-    fieldOfStudy?: string;
-    studyYear?: number | null;
     location: string;
     avatarUrl: string;
     preferences: string[];
+    preferredCounties: string[];
     activities: ActivityItem[];
     hasHome?: boolean;
 }
@@ -109,6 +112,7 @@ const EMPTY_PROFILE: UserProfile = {
     location: "",
     avatarUrl: "",
     preferences: [],
+    preferredCounties: [],
     activities: [],
 };
 
@@ -147,10 +151,12 @@ const getProfileSnapshot = (profile: UserProfile) =>
         location: profile.location,
         avatarUrl: profile.avatarUrl,
         preferences: profile.preferences,
+        preferredCounties: profile.preferredCounties,
         activities: profile.activities,
     });
 
 export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) {
+    const availableCounties = useCounties();
     const [profile, setProfile] = useState<UserProfile>(getInitialProfile);
     const [savedSnapshot, setSavedSnapshot] = useState(
         () => getProfileSnapshot(getInitialProfile())
@@ -232,6 +238,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                         location: data.location ?? "",
                         avatarUrl: data.avatarUrl ?? "",
                         preferences: Array.isArray(data.preferences) ? data.preferences : [],
+                        preferredCounties: Array.isArray(data.preferredCounties) ? data.preferredCounties : [],
                         activities: Array.isArray(data.activities) ? data.activities : [],
                         hasHome: Boolean(data.hasHome),
                     };
@@ -286,6 +293,20 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
         setCustomTagInput("");
     };
 
+    const handleTogglePreferredCounty = (code: string) => {
+        if (!code || !isValidCountyId(code)) return;
+        const normalized = code.trim().toUpperCase();
+        setProfile((prev) => {
+            const current = prev.preferredCounties || [];
+            const exists = current.includes(normalized);
+            const next = exists
+                ? current.filter((c) => c !== normalized)
+                : [...current, normalized];
+            return { ...prev, preferredCounties: next };
+        });
+        setStatusMessage(null);
+    };
+
     const handleOpenEditModal = () => {
         setEditForm({
             firstName: profile.firstName,
@@ -338,6 +359,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                     location: newLocation,
                     avatarUrl: newAvatarUrl,
                     preferences: profile.preferences,
+                    preferredCounties: profile.preferredCounties,
                     activities: profile.activities,
                 }),
             });
@@ -380,6 +402,9 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                 preferences: Array.isArray(data?.preferences)
                     ? data.preferences
                     : profile.preferences,
+                preferredCounties: Array.isArray(data?.preferredCounties)
+                    ? data.preferredCounties
+                    : profile.preferredCounties,
                 activities: Array.isArray(data?.activities)
                     ? data.activities
                     : profile.activities,
@@ -509,6 +534,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                     location: profile.location,
                     avatarUrl: profile.avatarUrl,
                     preferences: profile.preferences,
+                    preferredCounties: profile.preferredCounties,
                     activities: profile.activities,
                 }),
             });
@@ -870,6 +896,88 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                                         <Plus className="size-4" /> Add Tag
                                     </Button>
                                 </form>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader className="pb-3">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div>
+                                        <CardTitle className="text-xl flex items-center gap-2">
+                                            <MapPin className="size-5 text-primary" />
+                                            Preferred Swap Destinations
+                                        </CardTitle>
+                                        <CardDescription className="mt-1">
+                                            Choose the Romanian counties and Bucharest where you are looking to swap homes.
+                                        </CardDescription>
+                                    </div>
+                                    <Badge
+                                        variant="outline"
+                                        className={
+                                            profile.preferredCounties.length > 0
+                                                ? "border-primary text-primary"
+                                                : "border-muted-foreground/40 text-muted-foreground"
+                                        }
+                                    >
+                                        {profile.preferredCounties.length} selected
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+
+                            <CardContent className="space-y-5 pt-2">
+                                <div className="p-4 rounded-xl bg-muted/40 border border-border/60">
+                                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">
+                                        Your Target Swap Counties ({profile.preferredCounties.length})
+                                    </p>
+                                    {profile.preferredCounties.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            No destination counties selected yet. Choose a county below to indicate your preferred swap locations.
+                                        </p>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.preferredCounties.map((code) => (
+                                                <Badge
+                                                    key={code}
+                                                    variant="secondary"
+                                                    className="px-3 py-1.5 text-sm font-medium gap-1.5 bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 cursor-pointer"
+                                                    onClick={() => handleTogglePreferredCounty(code)}
+                                                >
+                                                    📍 {getCountyName(code)} ({code})
+                                                    <X className="size-3.5 hover:text-destructive" />
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="addCountySelect">Add Preferred County</Label>
+                                    <div className="flex max-w-md items-center gap-2">
+                                        <NativeSelect
+                                            id="addCountySelect"
+                                            value=""
+                                            onChange={(e) => {
+                                                if (e.target.value) {
+                                                    handleTogglePreferredCounty(e.target.value);
+                                                }
+                                            }}
+                                        >
+                                            <NativeSelectOption value="">
+                                                + Select a Romanian county or Bucharest...
+                                            </NativeSelectOption>
+                                            {availableCounties
+                                                .filter((c) => !profile.preferredCounties.includes(c.id))
+                                                .map((c) => (
+                                                    <NativeSelectOption key={c.id} value={c.id}>
+                                                        {c.name} ({c.id})
+                                                    </NativeSelectOption>
+                                                ))}
+                                        </NativeSelect>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Duplicate county selections are automatically prevented.
+                                    </p>
+                                </div>
                             </CardContent>
                         </Card>
 

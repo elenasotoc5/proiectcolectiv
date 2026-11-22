@@ -289,7 +289,6 @@ class HomeAvailabilityServiceTest {
         () -> homeAvailabilityService.createHomeAvailability(homeId, request));
 
     assertEquals(HttpStatus.UNAUTHORIZED, exception.getStatusCode());
-
     verifyNoInteractions(homeRepository, homeAvailabilityRepository);
   }
 
