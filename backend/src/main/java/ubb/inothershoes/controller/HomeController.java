@@ -39,8 +39,13 @@ public class HomeController implements HomesApi {
   }
 
   @Override
-  public ResponseEntity<HomeResponse> createHome(
-      @Valid CreateHomeRequest createHomeRequest) {
+  public ResponseEntity<List<HomeResponse>> getAllHomes(String county) {
+    List<HomeResponse> homes = homeService.getAllHomes(county);
+    return ResponseEntity.ok(homes);
+  }
+
+  @Override
+  public ResponseEntity<HomeResponse> createHome(@Valid CreateHomeRequest createHomeRequest) {
 
     HomeResponse response = homeService.createHome(createHomeRequest);
 
@@ -57,7 +62,7 @@ public class HomeController implements HomesApi {
 
   @Override
   public ResponseEntity<HomeResponse> updateHome(
-      Long homeId, @Valid CreateHomeRequest createHomeRequest) {
+          Long homeId, @Valid CreateHomeRequest createHomeRequest) {
 
     HomeResponse response = homeService.updateHome(homeId, createHomeRequest);
 
@@ -111,15 +116,16 @@ public class HomeController implements HomesApi {
   }
 
   @Override
+  @SuppressWarnings("null") // Spring's @NonNullApi vs. unannotated entity getter
   public ResponseEntity<Resource> getHomePhotoImage(Long homeId, Long photoId) {
 
     HomePhoto photo = homePhotoService.getPhotoById(homeId, photoId);
     Resource image = homePhotoService.getPhotoImage(photo);
 
     return ResponseEntity.ok()
-        .contentType(MediaType.parseMediaType(photo.getContentType()))
-        .header(HttpHeaders.CACHE_CONTROL, "max-age=86400, public")
-        .body(image);
+            .contentType(MediaType.parseMediaType(photo.getContentType()))
+            .header(HttpHeaders.CACHE_CONTROL, "max-age=86400, public")
+            .body(image);
   }
 
   @Override

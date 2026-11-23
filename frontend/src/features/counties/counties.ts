@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import { getAuthHeaders } from "@/lib/auth";
 export interface County {
     id: string; 
     name: string;
@@ -98,7 +98,11 @@ export async function fetchCounties(): Promise<County[]> {
 
     countiesPromise = (async () => {
         try {
-            const response = await fetch(`${API_URL}/api/v1/counties`);
+            const response = await fetch(`${API_URL}/api/v1/counties`, {
+                headers: {
+                    ...getAuthHeaders(),
+                },
+            });
             if (response.ok) {
                 const data: County[] = await response.json();
                 if (Array.isArray(data) && data.length > 0) {
