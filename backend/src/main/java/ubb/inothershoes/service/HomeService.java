@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ubb.inothershoes.entity.Home;
+import ubb.inothershoes.entity.HomePhoto;
 import ubb.inothershoes.entity.User;
 import ubb.inothershoes.model.CreateHomeRequest;
 import ubb.inothershoes.model.HomeResponse;
@@ -26,10 +27,10 @@ public class HomeService {
   private final CountyService countyService;
 
   public HomeService(
-      HomeRepository homeRepository,
-      UserRepository userRepository,
-      HomePhotoService homePhotoService,
-      CountyService countyService) {
+          HomeRepository homeRepository,
+          UserRepository userRepository,
+          HomePhotoService homePhotoService,
+          CountyService countyService) {
     this.homeRepository = homeRepository;
     this.userRepository = userRepository;
     this.homePhotoService = homePhotoService;
@@ -53,32 +54,32 @@ public class HomeService {
     }
 
     User owner =
-        userRepository
-            .findById(userId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            userRepository
+                    .findById(userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
     if (!homeRepository.findByOwnerId(owner.getId()).isEmpty()) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST,
-          "Users can only have one home. Please update your existing home.");
+              HttpStatus.BAD_REQUEST,
+              "Users can only have one home. Please update your existing home.");
     }
 
     if (isBlank(request.getTitle())
-        || isBlank(request.getCity())
-        || isBlank(request.getCounty())
-        || isBlank(request.getAddress())
-        || isBlank(request.getDescription())
-        || isBlank(request.getHousingType())
-        || request.getGuestCapacity() == null
-        || request.getGuestCapacity() < 1) {
+            || isBlank(request.getCity())
+            || isBlank(request.getCounty())
+            || isBlank(request.getAddress())
+            || isBlank(request.getDescription())
+            || isBlank(request.getHousingType())
+            || request.getGuestCapacity() == null
+            || request.getGuestCapacity() < 1) {
 
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Please complete all required home details");
+              HttpStatus.BAD_REQUEST, "Please complete all required home details");
     }
 
     if (!countyService.isValidCountyCode(request.getCounty())) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Invalid county identifier: " + request.getCounty());
+              HttpStatus.BAD_REQUEST, "Invalid county identifier: " + request.getCounty());
     }
 
     Home home = new Home();
@@ -93,9 +94,9 @@ public class HomeService {
     home.setGuestCapacity(request.getGuestCapacity());
 
     List<String> amenities =
-        request.getAmenities() != null
-            ? new ArrayList<>(request.getAmenities())
-            : new ArrayList<>();
+            request.getAmenities() != null
+                    ? new ArrayList<>(request.getAmenities())
+                    : new ArrayList<>();
 
     home.setAmenities(amenities);
 
@@ -136,22 +137,22 @@ public class HomeService {
     Home home = getOwnedHome(homeId);
 
     if (request == null
-        || isBlank(request.getTitle())
-        || isBlank(request.getCity())
-        || isBlank(request.getCounty())
-        || isBlank(request.getAddress())
-        || isBlank(request.getDescription())
-        || isBlank(request.getHousingType())
-        || request.getGuestCapacity() == null
-        || request.getGuestCapacity() < 1) {
+            || isBlank(request.getTitle())
+            || isBlank(request.getCity())
+            || isBlank(request.getCounty())
+            || isBlank(request.getAddress())
+            || isBlank(request.getDescription())
+            || isBlank(request.getHousingType())
+            || request.getGuestCapacity() == null
+            || request.getGuestCapacity() < 1) {
 
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Please complete all required home details");
+              HttpStatus.BAD_REQUEST, "Please complete all required home details");
     }
 
     if (!countyService.isValidCountyCode(request.getCounty())) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Invalid county identifier: " + request.getCounty());
+              HttpStatus.BAD_REQUEST, "Invalid county identifier: " + request.getCounty());
     }
 
     home.setTitle(request.getTitle().trim());
@@ -163,9 +164,9 @@ public class HomeService {
     home.setGuestCapacity(request.getGuestCapacity());
 
     home.setAmenities(
-        request.getAmenities() != null
-            ? new ArrayList<>(request.getAmenities())
-            : new ArrayList<>());
+            request.getAmenities() != null
+                    ? new ArrayList<>(request.getAmenities())
+                    : new ArrayList<>());
 
     Home savedHome = homeRepository.save(home);
 
@@ -196,13 +197,13 @@ public class HomeService {
     }
 
     Home home =
-        homeRepository
-            .findById(homeId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Home not found"));
+            homeRepository
+                    .findById(homeId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Home not found"));
 
     if (!home.getOwner().getId().equals(principal.getId())) {
       throw new ResponseStatusException(
-          HttpStatus.FORBIDDEN, "You are not authorized to modify this home");
+              HttpStatus.FORBIDDEN, "You are not authorized to modify this home");
     }
 
     return home;
@@ -215,15 +216,15 @@ public class HomeService {
     }
 
     Home home =
-        homeRepository
-            .findById(homeId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Home not found"));
+            homeRepository
+                    .findById(homeId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Home not found"));
 
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     boolean isOwner =
-        auth != null
-            && auth.getPrincipal() instanceof UserPrincipal principal
-            && home.getOwner().getId().equals(principal.getId());
+            auth != null
+                    && auth.getPrincipal() instanceof UserPrincipal principal
+                    && home.getOwner().getId().equals(principal.getId());
 
     return homeToHomeResponse(home, isOwner);
   }
@@ -245,6 +246,29 @@ public class HomeService {
     response.setGuestCapacity(home.getGuestCapacity());
     response.setAmenities(home.getAmenities());
     response.setCreatedAt(home.getCreatedAt());
+
+    List<HomePhoto> photos = homePhotoService.getHomePhotos(home.getId());
+    if (photos != null && !photos.isEmpty()) {
+      response.setPrimaryPhotoUrl(
+              "/api/v1/homes/" + home.getId() + "/photos/" + photos.get(0).getId() + "/image");
+    }
+
     return response;
+  }
+
+  @Transactional(readOnly = true)
+  public List<HomeResponse> getAllHomes(String county) {
+    List<Home> homes;
+    if (county != null && !county.trim().isEmpty()) {
+      homes = homeRepository.findByCountyIgnoreCase(county.trim());
+    } else {
+      homes = homeRepository.findAll();
+    }
+
+    List<HomeResponse> responses = new ArrayList<>();
+    for (Home home : homes) {
+      responses.add(homeToHomeResponse(home, false));
+    }
+    return responses;
   }
 }

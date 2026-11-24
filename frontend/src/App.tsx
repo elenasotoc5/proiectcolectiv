@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import HomePage from "@/features/homepage/HomePage";
 import RegisterPage from "@/features/auth/RegisterPage";
@@ -7,6 +6,7 @@ import ProfilePage from "@/features/profile/ProfilePage";
 import AddHomePage from "@/features/home/AddHomePage";
 import MatchesPage from "@/features/matches/MatchesPage";
 import DashboardPage from "@/features/dashboard/DashboardPage";
+import ExploreHomesPage from "@/features/home/ExploreHomesPage"; // <-- 1. Importă componenta
 import DashboardSidebar, {
     type DashboardView,
 } from "@/components/layout/DashboardSidebar";
@@ -133,6 +133,8 @@ function App() {
                         onNavigate={navigateToProtectedPage}
                         onLogout={handleLogout}
                     />
+                ) : currentView === "explore" ? (
+                    <ExploreHomesPage />
                 ) : (
                     <main className="px-6 py-20 md:p-8">
                         <h1 className="text-3xl font-bold">
