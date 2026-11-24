@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getAuthHeaders } from "@/lib/auth";
 import { HomePhotoGallery } from "@/features/home/HomePhotos";
+import HomeAvailabilityCalendar from "@/features/home/HomeAvailabilityCalendar";
 import { useCounties, getCountyName } from "@/features/counties/counties";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -44,12 +45,12 @@ interface HomeDetailsPageProps {
 }
 
 export default function HomeDetailsPage({
-                                            homeId,
-                                            isOwner,
-                                            onBack,
-                                            onEdit,
-                                            onDelete,
-                                        }: HomeDetailsPageProps) {
+    homeId,
+    isOwner,
+    onBack,
+    onEdit,
+    onDelete,
+}: HomeDetailsPageProps) {
     useCounties();
     const [home, setHome] = useState<Home | null>(null);
     const [loading, setLoading] = useState(true);
@@ -180,6 +181,10 @@ export default function HomeDetailsPage({
             <div className="rounded-2xl overflow-hidden">
                 <HomePhotoGallery homeId={homeId} />
             </div>
+
+            {isOwner && (
+                <HomeAvailabilityCalendar homeId={homeId} />
+            )}
 
             <div className="grid gap-8 lg:grid-cols-3 pt-4">
                 <div className="space-y-8 lg:col-span-2">
