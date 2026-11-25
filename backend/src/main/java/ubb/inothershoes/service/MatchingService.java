@@ -52,7 +52,7 @@ public class MatchingService {
             return List.of();
         }
 
-        Home myHome = ownedHomes.get(0); // Existing application rule: one home per user.
+        Home myHome = ownedHomes.get(0);
         Set<String> preferredDestinations = currentUser.getPreferredCounties();
         if (preferredDestinations == null || preferredDestinations.isEmpty()) {
             return List.of();
@@ -122,7 +122,6 @@ public class MatchingService {
                 LocalDate end = a.getEndDate().isBefore(b.getEndDate())
                         ? a.getEndDate() : b.getEndDate();
 
-                // Inclusive dates: [Dec 5, Dec 11] is a seven-day period.
                 LocalDate lastPossibleStart = end.minusDays(SWAP_DAYS - 1L);
                 for (LocalDate day = start; !day.isAfter(lastPossibleStart); day = day.plusDays(1)) {
                     starts.add(day);
