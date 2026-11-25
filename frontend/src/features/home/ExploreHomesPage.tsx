@@ -417,7 +417,6 @@ export default function ExploreHomesPage() {
         }
 
         if (likedIds.includes(home.id)) {
-            // The user already liked this home. Don't create another like.
             setCurrentIndex((prev) => prev + 1);
             return;
         }
@@ -442,7 +441,6 @@ export default function ExploreHomesPage() {
     const handleRestartDeck = () => {
         setCurrentIndex(0);
         setPassedIds([]);
-        // Saved likes must remain intact when the deck is restarted.
     };
 
     if (selectedHomeId !== null) {
@@ -609,7 +607,7 @@ export default function ExploreHomesPage() {
                         Home {currentIndex + 1} of {homes.length}
                     </div>
 
-                    {/* Deck de carduri suprapuse */}
+                    {}
                     <div className="relative w-full max-w-md">
                         {nextHome && (
                             <div
@@ -643,7 +641,7 @@ export default function ExploreHomesPage() {
                         />
                     </div>
 
-                    {/* Butoane Stânga (Nope) / Dreapta (Like) */}
+                    {}
                     <div className="flex items-center justify-center gap-6 pt-1">
                         <button
                             type="button"
