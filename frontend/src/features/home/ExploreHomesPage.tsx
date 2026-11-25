@@ -429,7 +429,6 @@ export default function ExploreHomesPage() {
             setLikedIds((prev) => prev.includes(home.id) ? prev : [...prev, home.id]);
             setCurrentIndex((prev) => prev + 1);
         } catch (err) {
-            // Keep this home visible so the user can retry the failed like.
             setError(err instanceof Error ? err.message : "Could not save this like.");
             setSwipeResetToken((prev) => prev + 1);
         } finally {
