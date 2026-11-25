@@ -162,7 +162,7 @@ paths:
 
   /api/v1/homes:
     get:
-      summary: Get all homes with optional county filter
+      summary: Discover homes with optional county filters (excludes authenticated user's own homes)
       operationId: getAllHomes
       tags:
         - Homes
@@ -172,6 +172,7 @@ paths:
         - name: county
           in: query
           required: false
+          description: One county code (CJ) or multiple comma-separated codes (CJ,BH,B).
           schema:
             type: string
       responses:
