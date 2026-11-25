@@ -45,7 +45,7 @@ function readErrorMessage(data: unknown, fallback: string): string {
 export default function HomeAvailabilityCalendar({
     homeId,
 }: HomeAvailabilityCalendarProps) {
-    const baseUrl = `${API_URL}/api/v1/homes/${homeId}/availabilities`;
+    const baseUrl = `${API_URL}/api/v1/homes/${homeId}/availability`;
     const [availability, setAvailability] = useState<Availability[]>([]);
     const [range, setRange] = useState<DateRange>();
     const [loading, setLoading] = useState(true);
