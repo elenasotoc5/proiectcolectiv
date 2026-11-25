@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
     LayoutDashboard,
     Compass,
+    Heart,
     HeartHandshake,
     House,
     UserRound,
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 export type DashboardView =
     | "dashboard"
     | "explore"
+    | "liked-homes"
     | "matches"
     | "my-home"
     | "profile";
@@ -30,6 +32,7 @@ interface DashboardSidebarProps {
 const menuItems = [
     { label: "Dashboard", view: "dashboard", icon: LayoutDashboard },
     { label: "Explore Homes", view: "explore", icon: Compass },
+    { label: "Liked Homes", view: "liked-homes", icon: Heart },
     { label: "My Matches", view: "matches", icon: HeartHandshake },
     { label: "My Home", view: "my-home", icon: House },
     { label: "My Profile", view: "profile", icon: UserRound },

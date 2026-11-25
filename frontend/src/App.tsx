@@ -6,7 +6,8 @@ import ProfilePage from "@/features/profile/ProfilePage";
 import AddHomePage from "@/features/home/AddHomePage";
 import MatchesPage from "@/features/matches/MatchesPage";
 import DashboardPage from "@/features/dashboard/DashboardPage";
-import ExploreHomesPage from "@/features/home/ExploreHomesPage"; // <-- 1. Importă componenta
+import ExploreHomesPage from "@/features/home/ExploreHomesPage";
+import LikedHomesPage from "@/features/home/LikedHomesPage";
 import DashboardSidebar, {
     type DashboardView,
 } from "@/components/layout/DashboardSidebar";
@@ -26,6 +27,7 @@ function App() {
             "home",
             "dashboard",
             "explore",
+            "liked-homes",
             "matches",
             "my-home",
             "profile",
@@ -105,6 +107,7 @@ function App() {
         explore: "Explore Homes",
         matches: "My Matches",
         "my-home": "My Home",
+        "liked-homes": "Liked Homes",
     };
 
     return (
@@ -135,6 +138,10 @@ function App() {
                     />
                 ) : currentView === "explore" ? (
                     <ExploreHomesPage />
+                ) : currentView === "liked-homes" ? (
+                    <LikedHomesPage
+                        onExplore={() => navigateToProtectedPage("explore")}
+                    />
                 ) : (
                     <main className="px-6 py-20 md:p-8">
                         <h1 className="text-3xl font-bold">

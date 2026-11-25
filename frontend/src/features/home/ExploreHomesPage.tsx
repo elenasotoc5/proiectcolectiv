@@ -19,6 +19,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { useCounties, getCountyName } from "@/features/counties/counties";
 import { getAuthHeaders } from "@/lib/auth";
 import HomeDetailsPage from "./HomeDetailsPage";
+import { getLikedHomes, likeHome } from "./homeLikesApi";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -52,9 +53,10 @@ interface TinderSwipeCardProps {
     home: HomeResponse;
     onSelect: (id: number) => void;
     onSwipe: (direction: "left" | "right", home: HomeResponse) => void;
+    disabled?: boolean;
 }
 
-function TinderSwipeCard({ home, onSelect, onSwipe }: TinderSwipeCardProps) {
+function TinderSwipeCard({ home, onSelect, onSwipe, disabled = false }: TinderSwipeCardProps) {
     const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
     const [photoList, setPhotoList] = useState<string[]>(() => {
         if (home.photos && home.photos.length > 0) {
@@ -110,7 +112,7 @@ function TinderSwipeCard({ home, onSelect, onSwipe }: TinderSwipeCardProps) {
     }, [home.id, home.photos, fetchedAllPhotos]);
 
     const triggerSwipe = (direction: "left" | "right") => {
-        if (exitDirection) return;
+        if (exitDirection || disabled) return;
         setExitDirection(direction);
         setDragOffset({ x: direction === "right" ? 520 : -520, y: 25 });
         window.setTimeout(() => {
@@ -119,7 +121,7 @@ function TinderSwipeCard({ home, onSelect, onSwipe }: TinderSwipeCardProps) {
     };
 
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (exitDirection) return;
+        if (exitDirection || disabled) return;
         if ((e.target as HTMLElement).closest("[data-no-drag='true']")) return;
 
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -335,6 +337,10 @@ export default function ExploreHomesPage() {
     const [homes, setHomes] = useState<HomeResponse[]>([]);
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [likedIds, setLikedIds] = useState<number[]>([]);
+    const [likesLoading, setLikesLoading] = useState(true);
+    const [savingLike, setSavingLike] = useState(false);
+    const savingLikeRef = useRef(false);
+    const [swipeResetToken, setSwipeResetToken] = useState(0);
     const [passedIds, setPassedIds] = useState<number[]>([]);
     const [selectedCounty, setSelectedCounty] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(true);
@@ -365,7 +371,6 @@ export default function ExploreHomesPage() {
 
             setHomes(filtered);
             setCurrentIndex(0);
-            setLikedIds([]);
             setPassedIds([]);
         } catch (err) {
             setError(err instanceof Error ? err.message : "An unknown error occurred.");
@@ -375,7 +380,21 @@ export default function ExploreHomesPage() {
     };
 
     useEffect(() => {
-        fetchHomes();
+        void fetchHomes();
+        const controller = new AbortController();
+        getLikedHomes(controller.signal)
+            .then((likedHomes) => {
+                if (!controller.signal.aborted) setLikedIds(likedHomes.map((home) => home.id));
+            })
+            .catch((err: unknown) => {
+                if (!controller.signal.aborted) {
+                    setError(err instanceof Error ? err.message : "Could not load your liked homes.");
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) setLikesLoading(false);
+            });
+        return () => controller.abort();
     }, []);
 
     const handleCountyChange = (countyId: string) => {
@@ -388,18 +407,38 @@ export default function ExploreHomesPage() {
         fetchHomes("");
     };
 
-    const handleSwipe = (direction: "left" | "right", home: HomeResponse) => {
-        if (direction === "right") {
-            setLikedIds((prev) => (prev.includes(home.id) ? prev : [...prev, home.id]));
-        } else {
-            setPassedIds((prev) => (prev.includes(home.id) ? prev : [...prev, home.id]));
+    const handleSwipe = async (direction: "left" | "right", home: HomeResponse) => {
+        if (likesLoading || savingLikeRef.current) return;
+
+        if (direction === "left") {
+            setPassedIds((prev) => prev.includes(home.id) ? prev : [...prev, home.id]);
+            setCurrentIndex((prev) => prev + 1);
+            return;
         }
-        setCurrentIndex((prev) => prev + 1);
+
+        if (likedIds.includes(home.id)) {
+            setCurrentIndex((prev) => prev + 1);
+            return;
+        }
+
+        savingLikeRef.current = true;
+        setSavingLike(true);
+        setError(null);
+        try {
+            await likeHome(home.id);
+            setLikedIds((prev) => prev.includes(home.id) ? prev : [...prev, home.id]);
+            setCurrentIndex((prev) => prev + 1);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Could not save this like.");
+            setSwipeResetToken((prev) => prev + 1);
+        } finally {
+            savingLikeRef.current = false;
+            setSavingLike(false);
+        }
     };
 
     const handleRestartDeck = () => {
         setCurrentIndex(0);
-        setLikedIds([]);
         setPassedIds([]);
     };
 
@@ -425,7 +464,7 @@ export default function ExploreHomesPage() {
         );
     }
 
-    if (error) {
+    if (error && homes.length === 0) {
         return (
             <main className="mx-auto max-w-4xl px-6 py-12">
                 <div
@@ -450,6 +489,11 @@ export default function ExploreHomesPage() {
 
     return (
         <main className="mx-auto w-full max-w-4xl px-6 py-8 space-y-6">
+            {error && (
+                <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                    {error}
+                </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2.5">
@@ -467,7 +511,7 @@ export default function ExploreHomesPage() {
                             Passed: {passedIds.length}
                         </span>
                         <span className="rounded-full bg-emerald-500/10 text-emerald-600 px-3 py-1">
-                            Liked: {likedIds.length}
+                            Saved likes: {likedIds.length}
                         </span>
                     </div>
                 )}
@@ -537,7 +581,7 @@ export default function ExploreHomesPage() {
                         <div className="space-y-1.5">
                             <h3 className="text-xl font-bold">You&apos;ve seen all homes in this list!</h3>
                             <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                                You liked <span className="font-semibold text-emerald-600">{likedIds.length}</span>{" "}
+                                You have saved <span className="font-semibold text-emerald-600">{likedIds.length}</span>{" "}
                                 {likedIds.length === 1 ? "home" : "homes"} and passed on{" "}
                                 <span className="font-semibold text-rose-600">{passedIds.length}</span>.
                             </p>
@@ -562,7 +606,7 @@ export default function ExploreHomesPage() {
                         Home {currentIndex + 1} of {homes.length}
                     </div>
 
-                    {/* Deck de carduri suprapuse */}
+                    {}
                     <div className="relative w-full max-w-md">
                         {nextHome && (
                             <div
@@ -588,18 +632,20 @@ export default function ExploreHomesPage() {
                         )}
 
                         <TinderSwipeCard
-                            key={activeHome.id}
+                            key={`${activeHome.id}-${swipeResetToken}`}
                             home={activeHome}
                             onSelect={(id) => setSelectedHomeId(id)}
-                            onSwipe={handleSwipe}
+                            onSwipe={(direction, home) => { void handleSwipe(direction, home); }}
+                            disabled={likesLoading || savingLike}
                         />
                     </div>
 
-                    {/* Butoane Stânga (Nope) / Dreapta (Like) */}
+                    {}
                     <div className="flex items-center justify-center gap-6 pt-1">
                         <button
                             type="button"
-                            onClick={() => handleSwipe("left", activeHome)}
+                            onClick={() => { void handleSwipe("left", activeHome); }}
+                            disabled={likesLoading || savingLike}
                             aria-label="Pass home"
                             title="Pass (Swipe Left)"
                             className="flex size-14 items-center justify-center rounded-full border-2 border-rose-500/40 bg-background text-rose-500 shadow-lg hover:bg-rose-500 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
@@ -609,7 +655,8 @@ export default function ExploreHomesPage() {
 
                         <button
                             type="button"
-                            onClick={() => handleSwipe("right", activeHome)}
+                            onClick={() => { void handleSwipe("right", activeHome); }}
+                            disabled={likesLoading || savingLike}
                             aria-label="Like home"
                             title="Like (Swipe Right)"
                             className="flex size-14 items-center justify-center rounded-full border-2 border-emerald-500/40 bg-background text-emerald-500 shadow-lg hover:bg-emerald-500 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer"
