@@ -482,6 +482,17 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
         }));
     };
 
+    const hasEnoughPreferences = profile.preferences.length >= 3;
+    const hasEnoughActivities = profile.activities.length >= 1;
+    const hasLocation = Boolean(profile.location?.trim());
+    const isReadyForMatching = hasHome && hasEnoughPreferences && hasEnoughActivities && hasLocation;
+    const missingRequirements = [
+        !hasHome ? "home" : null,
+        !hasEnoughPreferences ? "preferences (need at least 3)" : null,
+        !hasEnoughActivities ? "host activities (need at least 1)" : null,
+        !hasLocation ? "location" : null,
+    ].filter((item): item is string => item !== null);
+
     const handleSaveAll = async () => {
         setStatusMessage(null);
 
@@ -490,6 +501,14 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
             setStatusMessage({
                 type: "error",
                 text: "Please register or log in before saving your profile.",
+            });
+            return;
+        }
+
+        if (!hasLocation) {
+            setStatusMessage({
+                type: "error",
+                text: "Please provide your city & country before saving.",
             });
             return;
         }
@@ -529,7 +548,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                 throw new Error(errData?.message || "Failed to save profile changes.");
             }
             setSavedSnapshot(getProfileSnapshot(profile));
-            if (hasHome && hasEnoughPreferences && hasEnoughActivities && hasLocation) {
+            if (isReadyForMatching) {
                 setStatusMessage({
                     type: "success",
                     text: "Profile saved successfully! Your profile is ready for Life Swap matching.",
@@ -537,7 +556,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
             } else {
                 setStatusMessage({
                     type: "success",
-                    text: "Profile changes saved successfully. Complete the remaining requirements when you're ready to match.",
+                    text: `Profile saved! You can't match yet because you didn't add your ${missingRequirements.join(", ")}.`,
                 });
             }
         } catch (err: unknown) {
@@ -550,11 +569,6 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
             setIsSaving(false);
         }
     };
-
-    const hasEnoughPreferences = profile.preferences.length >= 3;
-    const hasEnoughActivities = profile.activities.length >= 1;
-    const hasLocation = Boolean(profile.location?.trim());
-    const isReadyForMatching = hasHome && hasEnoughPreferences && hasEnoughActivities && hasLocation;
 
     return (
         <main className="min-h-screen bg-background text-foreground pb-20">
@@ -647,11 +661,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                                 <div className="flex items-center gap-2 font-semibold text-destructive">
                                     <AlertCircle className="size-4 shrink-0 text-destructive" />
                                     <span>
-                                        You can't match because you didn't add your {[
-                                        !hasHome ? "home" : null,
-                                        !hasEnoughPreferences ? "preferences" : null,
-                                        !hasEnoughActivities ? "host activities" : null,
-                                    ].filter(Boolean).join(", ")}.
+                                        You can't match because you didn't add your {missingRequirements.join(", ")}.
                                     </span>
                                 </div>
                                 <p className="text-xs text-muted-foreground">
@@ -899,10 +909,7 @@ export default function ProfilePage({ onLogout, onNavigate }: ProfilePageProps) 
                             <CardContent className="space-y-5 pt-2">
                                 <RomaniaCountyMap
                                     selectedCounties={profile.preferredCounties}
-                                    onChange={(counties) => {
-                                        setProfile((prev) => ({ ...prev, preferredCounties: counties }));
-                                        setStatusMessage(null);
-                                    }}
+                                    onToggle={handleTogglePreferredCounty}
                                 />
                                 <div className="p-4 rounded-xl bg-muted/40 border border-border/60">
                                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2.5">

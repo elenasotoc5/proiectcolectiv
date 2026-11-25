@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import countyGeoJsonUrl from "./data/romania-counties.geojson?url";
 import { ROMANIAN_COUNTIES } from "./counties";
 
@@ -24,7 +24,7 @@ type MapCounty = {
 
 interface RomaniaCountyMapProps {
     selectedCounties: string[];
-    onChange: (counties: string[]) => void;
+    onToggle: (countyId: string) => void;
     disabled?: boolean;
     className?: string;
 }
@@ -79,108 +79,117 @@ function geometryRings(geometry: Geometry): Coordinates[][] {
         : geometry.coordinates.flat();
 }
 
-export default function RomaniaCountyMap({
-                                             selectedCounties,
-                                             onChange,
-                                             disabled = false,
-                                             className = "",
-                                         }: RomaniaCountyMapProps) {
-    const [counties, setCounties] = useState<MapCounty[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [hoveredId, setHoveredId] = useState<string | null>(null);
+type ProjectedCounty = MapCounty & { path: string };
 
-    useEffect(() => {
-        const controller = new AbortController();
+function projectCounties(counties: MapCounty[]): ProjectedCounty[] {
+    const allPoints = counties.flatMap((county) => geometryRings(county.geometry).flat());
+    if (allPoints.length === 0) return [];
 
-        const load = async () => {
-            setLoading(true);
-            setError("");
-            try {
-                const response = await fetch(countyGeoJsonUrl, { signal: controller.signal });
-                if (!response.ok) throw new Error("Could not load the Romania county map.");
-                const data: FeatureCollection = await response.json();
-                if (data.type !== "FeatureCollection" || !Array.isArray(data.features)) {
-                    throw new Error("Invalid county map data.");
-                }
+    const meanLatitude =
+        allPoints.reduce((sum, point) => sum + point[1], 0) / allPoints.length;
+    const longitudeFactor = Math.cos((meanLatitude * Math.PI) / 180);
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const [longitude, latitude] of allPoints) {
+        const x = longitude * longitudeFactor;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (latitude < minY) minY = latitude;
+        if (latitude > maxY) maxY = latitude;
+    }
+    const scale = Math.min(
+        (WIDTH - PADDING * 2) / Math.max(maxX - minX, 0.000001),
+        (HEIGHT - PADDING * 2) / Math.max(maxY - minY, 0.000001)
+    );
+    const offsetX = (WIDTH - (maxX - minX) * scale) / 2;
+    const offsetY = (HEIGHT - (maxY - minY) * scale) / 2;
 
-                const mapped = data.features
-                    .map(getCounty)
-                    .filter((county): county is MapCounty => county !== null);
+    const toXY = ([longitude, latitude]: Coordinates) => [
+        offsetX + (longitude * longitudeFactor - minX) * scale,
+        HEIGHT - offsetY - (latitude - minY) * scale,
+    ];
 
-                if (new Set(mapped.map((county) => county.id)).size !== 42) {
-                    throw new Error("County map data does not match all 42 Romanian locations.");
-                }
-                if (!controller.signal.aborted) setCounties(mapped);
-            } catch (err) {
-                if (!controller.signal.aborted) {
-                    setError(err instanceof Error ? err.message : "Could not load the map.");
-                }
-            } finally {
-                if (!controller.signal.aborted) setLoading(false);
-            }
-        };
-
-        void load();
-        return () => controller.abort();
-    }, []);
-
-    const projected = useMemo(() => {
-        const allPoints = counties.flatMap((county) =>
-            geometryRings(county.geometry).flat()
-        );
-        if (allPoints.length === 0) return [];
-
-        const meanLatitude =
-            allPoints.reduce((sum, point) => sum + point[1], 0) / allPoints.length;
-        const longitudeFactor = Math.cos((meanLatitude * Math.PI) / 180);
-        let minX = Infinity;
-        let maxX = -Infinity;
-        let minY = Infinity;
-        let maxY = -Infinity;
-        for (const [longitude, latitude] of allPoints) {
-            const x = longitude * longitudeFactor;
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            if (latitude < minY) minY = latitude;
-            if (latitude > maxY) maxY = latitude;
-        }
-        const scale = Math.min(
-            (WIDTH - PADDING * 2) / Math.max(maxX - minX, 0.000001),
-            (HEIGHT - PADDING * 2) / Math.max(maxY - minY, 0.000001)
-        );
-        const offsetX = (WIDTH - (maxX - minX) * scale) / 2;
-        const offsetY = (HEIGHT - (maxY - minY) * scale) / 2;
-
-        const toXY = ([longitude, latitude]: Coordinates) => [
-            offsetX + (longitude * longitudeFactor - minX) * scale,
-            HEIGHT - offsetY - (latitude - minY) * scale,
-        ];
-
-        return counties.map((county) => {
-            const path = geometryRings(county.geometry)
-                .map((ring) =>
+    return counties.map((county) => {
+        const path = geometryRings(county.geometry)
+            .map(
+                (ring) =>
                     ring
                         .map((point, index) => {
                             const [x, y] = toXY(point);
                             return `${index === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
                         })
                         .join(" ") + " Z"
-                )
-                .join(" ");
-            return { ...county, path };
-        });
-    }, [counties]);
+            )
+            .join(" ");
+        return { ...county, path };
+    });
+}
 
-    const selected = new Set(selectedCounties);
+let projectedCountiesPromise: Promise<ProjectedCounty[]> | null = null;
+
+function loadProjectedCounties(): Promise<ProjectedCounty[]> {
+    if (!projectedCountiesPromise) {
+        projectedCountiesPromise = (async () => {
+            const response = await fetch(countyGeoJsonUrl);
+            if (!response.ok) throw new Error("Could not load the Romania county map.");
+            const data: FeatureCollection = await response.json();
+            if (data.type !== "FeatureCollection" || !Array.isArray(data.features)) {
+                throw new Error("Invalid county map data.");
+            }
+
+            const mapped = data.features
+                .map(getCounty)
+                .filter((county): county is MapCounty => county !== null);
+
+            if (new Set(mapped.map((county) => county.id)).size !== 42) {
+                throw new Error("County map data does not match all 42 Romanian locations.");
+            }
+            return projectCounties(mapped);
+        })().catch((err) => {
+            projectedCountiesPromise = null;
+            throw err;
+        });
+    }
+    return projectedCountiesPromise;
+}
+
+export default function RomaniaCountyMap({
+                                             selectedCounties,
+                                             onToggle,
+                                             disabled = false,
+                                             className = "",
+                                         }: RomaniaCountyMapProps) {
+    const [projected, setProjected] = useState<ProjectedCounty[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+    useEffect(() => {
+        let isMounted = true;
+        loadProjectedCounties()
+            .then((counties) => {
+                if (isMounted) setProjected(counties);
+            })
+            .catch((err: unknown) => {
+                if (isMounted) {
+                    setError(err instanceof Error ? err.message : "Could not load the map.");
+                }
+            })
+            .finally(() => {
+                if (isMounted) setLoading(false);
+            });
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const selected = new Set(selectedCounties.map((county) => county.trim().toUpperCase()));
 
     const toggle = (id: string) => {
-        if (disabled || !countyById.has(id)) return;
-        onChange(
-            selected.has(id)
-                ? selectedCounties.filter((county) => county !== id)
-                : [...selectedCounties, id]
-        );
+        if (disabled) return;
+        onToggle(id);
     };
 
     return (
