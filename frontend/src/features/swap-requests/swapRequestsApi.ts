@@ -98,3 +98,16 @@ export async function getSentSwapRequests(signal?: AbortSignal): Promise<SwapReq
     const data: unknown = await response.json();
     return Array.isArray(data) ? (data as SwapRequest[]) : [];
 }
+
+export async function getReceivedSwapRequests(signal?: AbortSignal): Promise<SwapRequest[]> {
+    const response = await fetch(`${API_URL}/api/v1/swap-requests/received`, { headers: getAuthHeaders(), signal });
+    await checkResponse(response, "Could not load received swap requests");
+    const data: unknown = await response.json();
+    return Array.isArray(data) ? (data as SwapRequest[]) : [];
+}
+
+export async function getSwapRequest(id: number, signal?: AbortSignal): Promise<SwapRequest> {
+    const response = await fetch(`${API_URL}/api/v1/swap-requests/${id}`, { headers: getAuthHeaders(), signal });
+    await checkResponse(response, "Could not load swap request");
+    return (await response.json()) as SwapRequest;
+}
