@@ -8,6 +8,7 @@ import MatchesPage from "@/features/matches/MatchesPage";
 import DashboardPage from "@/features/dashboard/DashboardPage";
 import ExploreHomesPage from "@/features/home/ExploreHomesPage";
 import LikedHomesPage from "@/features/home/LikedHomesPage";
+import SwapRequestsPage from "@/features/swap-requests/SwapRequestsPage";
 import DashboardSidebar, {
     type DashboardView,
 } from "@/components/layout/DashboardSidebar";
@@ -29,6 +30,7 @@ function App() {
             "explore",
             "liked-homes",
             "matches",
+            "swap-requests",
             "my-home",
             "profile",
         ];
@@ -106,6 +108,7 @@ function App() {
         dashboard: "Dashboard",
         explore: "Explore Homes",
         matches: "My Matches",
+        "swap-requests": "My Swap Requests",
         "my-home": "My Home",
         "liked-homes": "Liked Homes",
     };
@@ -138,6 +141,10 @@ function App() {
                     />
                 ) : currentView === "explore" ? (
                     <ExploreHomesPage />
+                ) : currentView === "swap-requests" ? (
+                    <SwapRequestsPage
+                        onExplore={() => navigateToProtectedPage("explore")}
+                    />
                 ) : currentView === "liked-homes" ? (
                     <LikedHomesPage
                         onExplore={() => navigateToProtectedPage("explore")}

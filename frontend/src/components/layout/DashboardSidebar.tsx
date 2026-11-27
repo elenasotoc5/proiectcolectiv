@@ -12,6 +12,7 @@ import {
     LogOut,
     PanelLeftClose,
     PanelLeftOpen,
+    ArrowLeftRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,6 +21,7 @@ export type DashboardView =
     | "explore"
     | "liked-homes"
     | "matches"
+    | "swap-requests"
     | "my-home"
     | "profile";
 
@@ -34,6 +36,7 @@ const menuItems = [
     { label: "Explore Homes", view: "explore", icon: Compass },
     { label: "Liked Homes", view: "liked-homes", icon: Heart },
     { label: "My Matches", view: "matches", icon: HeartHandshake },
+    { label: "My Swap Requests", view: "swap-requests", icon: ArrowLeftRight },
     { label: "My Home", view: "my-home", icon: House },
     { label: "My Profile", view: "profile", icon: UserRound },
 ] as const;
