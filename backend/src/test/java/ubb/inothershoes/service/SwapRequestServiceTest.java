@@ -25,6 +25,7 @@ import ubb.inothershoes.entity.SwapRequest;
 import ubb.inothershoes.entity.SwapRequestStatus;
 import ubb.inothershoes.entity.User;
 import ubb.inothershoes.model.CreateSwapRequestRequest;
+import ubb.inothershoes.model.HomeResponse;
 import ubb.inothershoes.model.SwapRequestResponse;
 import ubb.inothershoes.repository.HomeAvailabilityRepository;
 import ubb.inothershoes.repository.HomeRepository;
@@ -37,6 +38,7 @@ class SwapRequestServiceTest {
   @Mock private SwapRequestRepository swapRequestRepository;
   @Mock private HomeRepository homeRepository;
   @Mock private HomeAvailabilityRepository availabilityRepository;
+  @Mock private HomeService homeService;
 
   @InjectMocks private SwapRequestService service;
 
@@ -165,6 +167,73 @@ class SwapRequestServiceTest {
     when(swapRequestRepository.save(any(SwapRequest.class))).thenAnswer(i -> i.getArgument(0));
 
     assertNotNull(service.createSwapRequest(request(myHome, otherHome, start)));
+  }
+
+  @Test
+  void listsSentRequestsWithHomes() {
+    SwapRequest sent = swapRequest(1L, myHome, otherHome);
+    when(swapRequestRepository.findByRequesterHome_Owner_IdOrderByCreatedAtDesc(1L))
+        .thenReturn(List.of(sent));
+    when(homeService.getHomeById(100L)).thenReturn(new HomeResponse().id(100L));
+    when(homeService.getHomeById(200L)).thenReturn(new HomeResponse().id(200L));
+
+    List<SwapRequestResponse> result = service.getSentSwapRequests();
+
+    assertEquals(1, result.size());
+    assertEquals(100L, result.get(0).getRequesterHome().getId());
+    assertEquals(200L, result.get(0).getTargetHome().getId());
+    assertEquals(start.plusDays(6), result.get(0).getEndDate());
+  }
+
+  @Test
+  void listsReceivedRequests() {
+    when(swapRequestRepository.findByTargetHome_Owner_IdOrderByCreatedAtDesc(1L))
+        .thenReturn(List.of(swapRequest(2L, otherHome, myHome)));
+
+    List<SwapRequestResponse> result = service.getReceivedSwapRequests();
+
+    assertEquals(1, result.size());
+    assertEquals(2L, result.get(0).getId());
+    assertEquals(SwapRequestResponse.StatusEnum.PENDING, result.get(0).getStatus());
+  }
+
+  @Test
+  void participantCanReadRequest() {
+    when(swapRequestRepository.findById(3L))
+        .thenReturn(Optional.of(swapRequest(3L, otherHome, myHome)));
+
+    assertEquals(3L, service.getSwapRequestById(3L).getId());
+  }
+
+  @Test
+  void nonParticipantGetsNotFound() {
+    Home strangerHome = home(300L, user(3L));
+    when(swapRequestRepository.findById(4L))
+        .thenReturn(Optional.of(swapRequest(4L, otherHome, strangerHome)));
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> service.getSwapRequestById(4L));
+    assertEquals(HttpStatus.NOT_FOUND.value(), ex.getStatusCode().value());
+  }
+
+  @Test
+  void unknownRequestGetsNotFound() {
+    when(swapRequestRepository.findById(5L)).thenReturn(Optional.empty());
+
+    ResponseStatusException ex =
+        assertThrows(ResponseStatusException.class, () -> service.getSwapRequestById(5L));
+    assertEquals(HttpStatus.NOT_FOUND.value(), ex.getStatusCode().value());
+  }
+
+  private SwapRequest swapRequest(Long id, Home from, Home to) {
+    SwapRequest r = new SwapRequest();
+    r.setId(id);
+    r.setRequesterHome(from);
+    r.setTargetHome(to);
+    r.setStartDate(start);
+    r.setEndDate(start.plusDays(6));
+    r.setStatus(SwapRequestStatus.PENDING);
+    return r;
   }
 
   private void assertStatus(HttpStatus expected, CreateSwapRequestRequest request) {

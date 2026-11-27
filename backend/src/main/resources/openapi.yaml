@@ -740,6 +740,77 @@ paths:
               schema:
                 $ref: './models.yaml#/components/schemas/ErrorResponse'
 
+  /api/v1/swap-requests/sent:
+    get:
+      tags:
+        - SwapRequests
+      operationId: getSentSwapRequests
+      summary: Get swap requests sent by the authenticated user
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Sent requests, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './models.yaml#/components/schemas/SwapRequestResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/swap-requests/received:
+    get:
+      tags:
+        - SwapRequests
+      operationId: getReceivedSwapRequests
+      summary: Get swap requests received for the authenticated user homes
+      security:
+        - bearerAuth: [ ]
+      responses:
+        '200':
+          description: Received requests, newest first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './models.yaml#/components/schemas/SwapRequestResponse'
+        '401':
+          description: Unauthorized
+
+  /api/v1/swap-requests/{swapRequestId}:
+    get:
+      tags:
+        - SwapRequests
+      operationId: getSwapRequestById
+      summary: Get a swap request (participants only)
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: swapRequestId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Swap request details
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/SwapRequestResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Swap request not found or the user is not a participant
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:

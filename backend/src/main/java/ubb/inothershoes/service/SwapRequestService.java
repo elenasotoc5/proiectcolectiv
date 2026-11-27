@@ -28,14 +28,48 @@ public class SwapRequestService {
   private final SwapRequestRepository swapRequestRepository;
   private final HomeRepository homeRepository;
   private final HomeAvailabilityRepository availabilityRepository;
+  private final HomeService homeService;
 
   public SwapRequestService(
       SwapRequestRepository swapRequestRepository,
       HomeRepository homeRepository,
-      HomeAvailabilityRepository availabilityRepository) {
+      HomeAvailabilityRepository availabilityRepository,
+      HomeService homeService) {
     this.swapRequestRepository = swapRequestRepository;
     this.homeRepository = homeRepository;
     this.availabilityRepository = availabilityRepository;
+    this.homeService = homeService;
+  }
+
+  @Transactional(readOnly = true)
+  public List<SwapRequestResponse> getSentSwapRequests() {
+    Long userId = authenticatedUserId();
+    return swapRequestRepository.findByRequesterHome_Owner_IdOrderByCreatedAtDesc(userId).stream()
+        .map(this::toResponse)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<SwapRequestResponse> getReceivedSwapRequests() {
+    Long userId = authenticatedUserId();
+    return swapRequestRepository.findByTargetHome_Owner_IdOrderByCreatedAtDesc(userId).stream()
+        .map(this::toResponse)
+        .toList();
+  }
+
+  /** Returns 404 for non-participants too, so the request's existence is not revealed. */
+  @Transactional(readOnly = true)
+  public SwapRequestResponse getSwapRequestById(Long swapRequestId) {
+    Long userId = authenticatedUserId();
+    return swapRequestRepository
+        .findById(swapRequestId)
+        .filter(
+            r ->
+                r.getRequesterHome().getOwner().getId().equals(userId)
+                    || r.getTargetHome().getOwner().getId().equals(userId))
+        .map(this::toResponse)
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Swap request not found"));
   }
 
   @Transactional
@@ -118,6 +152,8 @@ public class SwapRequestService {
         .id(swapRequest.getId())
         .requesterHomeId(swapRequest.getRequesterHome().getId())
         .targetHomeId(swapRequest.getTargetHome().getId())
+        .requesterHome(homeService.getHomeById(swapRequest.getRequesterHome().getId()))
+        .targetHome(homeService.getHomeById(swapRequest.getTargetHome().getId()))
         .startDate(swapRequest.getStartDate())
         .endDate(swapRequest.getEndDate())
         .status(SwapRequestResponse.StatusEnum.fromValue(swapRequest.getStatus().name()))
