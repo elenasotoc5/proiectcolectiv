@@ -346,3 +346,41 @@ components:
           format: date
           example: "2026-12-15"
     
+
+    SwapPeriod:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          example: "2026-12-01"
+        endDate:
+          type: string
+          format: date
+          example: "2026-12-07"
+
+    MatchResponse:
+      type: object
+      properties:
+        homeId:
+          type: integer
+          format: int64
+          example: 10
+        ownerId:
+          type: integer
+          format: int64
+          example: 3
+        title:
+          type: string
+        city:
+          type: string
+        county:
+          type: string
+        housingType:
+          type: string
+        guestCapacity:
+          type: integer
+        possibleSwapPeriods:
+          type: array
+          items:
+            $ref: '#/components/schemas/SwapPeriod'

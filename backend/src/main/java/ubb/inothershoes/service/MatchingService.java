@@ -12,7 +12,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
-import ubb.inothershoes.dto.MatchResponse;
+import ubb.inothershoes.model.MatchResponse;
+import ubb.inothershoes.model.SwapPeriod;
 import ubb.inothershoes.entity.Home;
 import ubb.inothershoes.entity.HomeAvailability;
 import ubb.inothershoes.entity.User;
@@ -78,21 +79,21 @@ public class MatchingService {
 
             List<HomeAvailability> theirAvailability =
                     availabilityRepository.findByHome_IdOrderByStartDateAsc(candidate.getId());
-            List<MatchResponse.SwapPeriod> possiblePeriods =
+            List<SwapPeriod> possiblePeriods =
                     overlappingSevenDayWindows(myAvailability, theirAvailability);
             if (possiblePeriods.isEmpty()) {
                 continue;
             }
 
-            matches.add(new MatchResponse(
-                    candidate.getId(),
-                    candidate.getOwner().getId(),
-                    candidate.getTitle(),
-                    candidate.getCity(),
-                    candidate.getCounty(),
-                    candidate.getHousingType(),
-                    candidate.getGuestCapacity(),
-                    possiblePeriods));
+            matches.add(new MatchResponse()
+                    .homeId(candidate.getId())
+                    .ownerId(candidate.getOwner().getId())
+                    .title(candidate.getTitle())
+                    .city(candidate.getCity())
+                    .county(candidate.getCounty())
+                    .housingType(candidate.getHousingType())
+                    .guestCapacity(candidate.getGuestCapacity())
+                    .possibleSwapPeriods(possiblePeriods));
         }
         return matches;
     }
@@ -107,7 +108,7 @@ public class MatchingService {
                 .anyMatch(value -> value.trim().toUpperCase(Locale.ROOT).equals(normalizedCounty));
     }
 
-    static List<MatchResponse.SwapPeriod> overlappingSevenDayWindows(
+    static List<SwapPeriod> overlappingSevenDayWindows(
             List<HomeAvailability> first, List<HomeAvailability> second) {
         LocalDate today = LocalDate.now();
         Set<LocalDate> starts = new TreeSet<>();
@@ -130,7 +131,7 @@ public class MatchingService {
         }
 
         return starts.stream()
-                .map(start -> new MatchResponse.SwapPeriod(start, start.plusDays(SWAP_DAYS - 1L)))
+                .map(start -> new SwapPeriod().startDate(start).endDate(start.plusDays(SWAP_DAYS - 1L)))
                 .toList();
     }
 }
