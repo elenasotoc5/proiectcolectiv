@@ -1,7 +1,6 @@
 package ubb.inothershoes.service;
 
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -122,9 +121,6 @@ public class SwapRequestService {
         .startDate(swapRequest.getStartDate())
         .endDate(swapRequest.getEndDate())
         .status(SwapRequestResponse.StatusEnum.fromValue(swapRequest.getStatus().name()))
-        .createdAt(
-            swapRequest.getCreatedAt() == null
-                ? null
-                : swapRequest.getCreatedAt().atOffset(ZoneOffset.UTC));
+        .createdAt(swapRequest.getCreatedAt());
   }
 }
