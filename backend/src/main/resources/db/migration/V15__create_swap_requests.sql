@@ -5,7 +5,7 @@ CREATE TABLE swap_requests (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_swap_requests_different_homes CHECK (requester_home_id <> target_home_id),
     CONSTRAINT chk_swap_requests_seven_days CHECK (end_date = start_date + 6),
     CONSTRAINT chk_swap_requests_status

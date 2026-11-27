@@ -2,7 +2,7 @@ package ubb.inothershoes.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Table(name = "swap_requests")
@@ -33,14 +33,7 @@ public class SwapRequest {
   private SwapRequestStatus status = SwapRequestStatus.PENDING;
 
   @Column(name = "created_at", nullable = false, updatable = false)
-  private LocalDateTime createdAt;
-
-  @PrePersist
-  void onCreate() {
-    if (createdAt == null) {
-      createdAt = LocalDateTime.now();
-    }
-  }
+  private OffsetDateTime createdAt = OffsetDateTime.now();
 
   public Long getId() {
     return id;
@@ -90,7 +83,7 @@ public class SwapRequest {
     this.status = status;
   }
 
-  public LocalDateTime getCreatedAt() {
+  public OffsetDateTime getCreatedAt() {
     return createdAt;
   }
 }
