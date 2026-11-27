@@ -692,6 +692,54 @@ paths:
         '401':
           description: Unauthorized
 
+  /api/v1/swap-requests:
+    post:
+      tags:
+        - SwapRequests
+      operationId: createSwapRequest
+      summary: Request a seven-day home exchange
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './models.yaml#/components/schemas/CreateSwapRequestRequest'
+      responses:
+        '201':
+          description: Swap request created with Pending status
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/SwapRequestResponse'
+        '400':
+          description: Invalid dates, unavailable homes or self-swap
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: The offered home does not belong to the user
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Home not found
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: A pending request for this home pair already exists, or the user reached the limit of 10 pending requests
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
