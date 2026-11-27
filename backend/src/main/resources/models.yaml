@@ -423,6 +423,10 @@ components:
           type: integer
           format: int64
           example: 2
+        requesterHome:
+          $ref: '#/components/schemas/HomeResponse'
+        targetHome:
+          $ref: '#/components/schemas/HomeResponse'
         startDate:
           type: string
           format: date
