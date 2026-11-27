@@ -384,3 +384,57 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SwapPeriod'
+
+    CreateSwapRequestRequest:
+      type: object
+      required:
+        - requesterHomeId
+        - targetHomeId
+        - startDate
+      properties:
+        requesterHomeId:
+          type: integer
+          format: int64
+          description: Home offered by the authenticated user
+          example: 1
+        targetHomeId:
+          type: integer
+          format: int64
+          description: Home the user wants to stay in
+          example: 2
+        startDate:
+          type: string
+          format: date
+          description: First day of the seven-day exchange
+          example: "2026-12-01"
+
+    SwapRequestResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        requesterHomeId:
+          type: integer
+          format: int64
+          example: 1
+        targetHomeId:
+          type: integer
+          format: int64
+          example: 2
+        startDate:
+          type: string
+          format: date
+          example: "2026-12-01"
+        endDate:
+          type: string
+          format: date
+          example: "2026-12-07"
+        status:
+          type: string
+          enum: [PENDING, ACCEPTED, REJECTED, CANCELLED]
+          example: PENDING
+        createdAt:
+          type: string
+          format: date-time
