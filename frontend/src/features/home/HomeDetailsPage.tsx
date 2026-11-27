@@ -11,6 +11,8 @@ import {
     CheckCircle2,
     Sparkles,
     ShieldCheck,
+    ArrowLeftRight,
+    Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,9 @@ import { getAuthHeaders } from "@/lib/auth";
 import { HomePhotoGallery } from "@/features/home/HomePhotos";
 import HomeAvailabilityCalendar from "@/features/home/HomeAvailabilityCalendar";
 import { useCounties, getCountyName } from "@/features/counties/counties";
+import RequestSwapDialog from "@/features/swap-requests/RequestSwapDialog";
+import { getSentSwapRequests, type SwapRequest } from "@/features/swap-requests/swapRequestsApi";
+import { format, parseISO } from "date-fns";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -55,7 +60,24 @@ export default function HomeDetailsPage({
     const [home, setHome] = useState<Home | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-    const [requestSent, setRequestSent] = useState(false);
+    const [swapDialogOpen, setSwapDialogOpen] = useState(false);
+    const [pendingRequests, setPendingRequests] = useState<SwapRequest[]>([]);
+
+    // Pending requests the user already sent for this home, shown under the Request Swap button.
+    useEffect(() => {
+        if (isOwner) return;
+        const controller = new AbortController();
+        getSentSwapRequests(controller.signal)
+            .then((requests) =>
+                setPendingRequests(
+                    requests.filter((r) => r.targetHomeId === homeId && r.status === "PENDING"),
+                ),
+            )
+            .catch(() => {
+                // Non-critical: the page still works without the request status.
+            });
+        return () => controller.abort();
+    }, [homeId, isOwner]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -285,14 +307,52 @@ export default function HomeDetailsPage({
                                 <div className="pt-2 space-y-2">
                                     <Button
                                         className="w-full rounded-xl h-11 font-semibold text-sm"
-                                        onClick={() => setRequestSent(true)}
-                                        disabled={requestSent}
+                                        onClick={() => setSwapDialogOpen(true)}
+                                        disabled={pendingRequests.length > 0}
                                     >
-                                        {requestSent ? "Interest Sent ✓" : "Request Stay / Connect"}
+                                        {pendingRequests.length > 0 ? (
+                                            <>
+                                                <Clock className="mr-2 size-4" />
+                                                Request Pending
+                                            </>
+                                        ) : (
+                                            <>
+                                                <ArrowLeftRight className="mr-2 size-4" />
+                                                Request Swap
+                                            </>
+                                        )}
                                     </Button>
-                                    <p className="text-[11px] text-center text-muted-foreground">
-                                        You won&apos;t be charged yet
-                                    </p>
+                                    {pendingRequests.length > 0 ? (
+                                        <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm space-y-1">
+                                            <p className="flex items-center gap-1.5 font-semibold text-primary">
+                                                <Clock className="size-4" />
+                                                {pendingRequests.length === 1
+                                                    ? "Swap request pending"
+                                                    : `${pendingRequests.length} swap requests pending`}
+                                            </p>
+                                            {pendingRequests.map((r) => (
+                                                <p key={r.id} className="text-xs text-muted-foreground">
+                                                    {format(parseISO(r.startDate), "MMM d")} –{" "}
+                                                    {format(parseISO(r.endDate), "MMM d, yyyy")}
+                                                    {r.requesterHome ? ` · offering ${r.requesterHome.title}` : ""}
+                                                </p>
+                                            ))}
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Waiting for the owner to accept or reject. You can send
+                                                a new request for this home once this one is answered.
+                                            </p>
+                                        </div>
+                                    ) : (
+                                        <p className="text-[11px] text-center text-muted-foreground">
+                                            Propose a 7-day exchange with your home
+                                        </p>
+                                    )}
+                                    <RequestSwapDialog
+                                        open={swapDialogOpen}
+                                        onOpenChange={setSwapDialogOpen}
+                                        targetHome={home}
+                                        onSent={(request) => setPendingRequests((prev) => [request, ...prev])}
+                                    />
                                 </div>
                             )}
                         </CardContent>
