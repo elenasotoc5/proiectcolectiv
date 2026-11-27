@@ -1,6 +1,5 @@
 package ubb.inothershoes.repository;
 
-import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ubb.inothershoes.entity.SwapRequest;
@@ -12,6 +11,8 @@ public interface SwapRequestRepository extends JpaRepository<SwapRequest, Long> 
 
   List<SwapRequest> findByTargetHome_Owner_IdOrderByCreatedAtDesc(Long ownerId);
 
-  boolean existsByRequesterHome_IdAndTargetHome_IdAndStartDateAndStatus(
-      Long requesterHomeId, Long targetHomeId, LocalDate startDate, SwapRequestStatus status);
+  boolean existsByRequesterHome_IdAndTargetHome_IdAndStatus(
+      Long requesterHomeId, Long targetHomeId, SwapRequestStatus status);
+
+  long countByRequesterHome_Owner_IdAndStatus(Long ownerId, SwapRequestStatus status);
 }

@@ -734,7 +734,7 @@ paths:
               schema:
                 $ref: './models.yaml#/components/schemas/ErrorResponse'
         '409':
-          description: An identical pending request already exists
+          description: A pending request for this home pair already exists, or the user reached the limit of 10 pending requests
           content:
             application/json:
               schema:

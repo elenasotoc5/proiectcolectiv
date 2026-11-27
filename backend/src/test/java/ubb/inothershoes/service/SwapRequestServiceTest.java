@@ -118,16 +118,40 @@ class SwapRequestServiceTest {
   }
 
   @Test
-  void rejectsDuplicatePendingRequest() {
+  void rejectsSecondPendingRequestForSameHomePair() {
     stubHomes();
     stubAvailability(myHome, start, start.plusDays(6));
     stubAvailability(otherHome, start, start.plusDays(6));
-    when(swapRequestRepository.existsByRequesterHome_IdAndTargetHome_IdAndStartDateAndStatus(
-            100L, 200L, start, SwapRequestStatus.PENDING))
+    when(swapRequestRepository.existsByRequesterHome_IdAndTargetHome_IdAndStatus(
+            100L, 200L, SwapRequestStatus.PENDING))
         .thenReturn(true);
 
     assertStatus(HttpStatus.CONFLICT, request(myHome, otherHome, start));
     verify(swapRequestRepository, never()).save(any());
+  }
+
+  @Test
+  void rejectsWhenPendingLimitReached() {
+    stubHomes();
+    stubAvailability(myHome, start, start.plusDays(6));
+    stubAvailability(otherHome, start, start.plusDays(6));
+    when(swapRequestRepository.countByRequesterHome_Owner_IdAndStatus(1L, SwapRequestStatus.PENDING))
+        .thenReturn((long) SwapRequestService.MAX_PENDING_REQUESTS);
+
+    assertStatus(HttpStatus.CONFLICT, request(myHome, otherHome, start));
+    verify(swapRequestRepository, never()).save(any());
+  }
+
+  @Test
+  void allowsRequestJustBelowPendingLimit() {
+    stubHomes();
+    stubAvailability(myHome, start, start.plusDays(6));
+    stubAvailability(otherHome, start, start.plusDays(6));
+    when(swapRequestRepository.countByRequesterHome_Owner_IdAndStatus(1L, SwapRequestStatus.PENDING))
+        .thenReturn((long) SwapRequestService.MAX_PENDING_REQUESTS - 1);
+    when(swapRequestRepository.save(any(SwapRequest.class))).thenAnswer(i -> i.getArgument(0));
+
+    assertNotNull(service.createSwapRequest(request(myHome, otherHome, start)));
   }
 
   @Test

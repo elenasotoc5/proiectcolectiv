@@ -23,6 +23,9 @@ import ubb.inothershoes.security.UserPrincipal;
 @Service
 public class SwapRequestService {
 
+  /** Maximum number of PENDING requests a user can have sent at the same time. */
+  static final int MAX_PENDING_REQUESTS = 10;
+
   private final SwapRequestRepository swapRequestRepository;
   private final HomeRepository homeRepository;
   private final HomeAvailabilityRepository availabilityRepository;
@@ -65,10 +68,17 @@ public class SwapRequestService {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "The requested home is not available for the selected period");
     }
-    if (swapRequestRepository.existsByRequesterHome_IdAndTargetHome_IdAndStartDateAndStatus(
-        requesterHome.getId(), targetHome.getId(), startDate, SwapRequestStatus.PENDING)) {
+    if (swapRequestRepository.existsByRequesterHome_IdAndTargetHome_IdAndStatus(
+        requesterHome.getId(), targetHome.getId(), SwapRequestStatus.PENDING)) {
       throw new ResponseStatusException(
-          HttpStatus.CONFLICT, "A pending request for this swap already exists");
+          HttpStatus.CONFLICT, "You already have a pending request for this home");
+    }
+    if (swapRequestRepository.countByRequesterHome_Owner_IdAndStatus(
+            userId, SwapRequestStatus.PENDING)
+        >= MAX_PENDING_REQUESTS) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT,
+          "You can have at most " + MAX_PENDING_REQUESTS + " pending swap requests at a time");
     }
 
     SwapRequest swapRequest = new SwapRequest();
