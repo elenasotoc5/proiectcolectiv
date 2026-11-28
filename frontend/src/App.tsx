@@ -8,6 +8,7 @@ import MatchesPage from "@/features/matches/MatchesPage";
 import DashboardPage from "@/features/dashboard/DashboardPage";
 import ExploreHomesPage from "@/features/home/ExploreHomesPage";
 import LikedHomesPage from "@/features/home/LikedHomesPage";
+import HomeDetailsPage from "@/features/home/HomeDetailsPage";
 import SwapRequestsPage from "@/features/swap-requests/SwapRequestsPage";
 import DashboardSidebar, {
     type DashboardView,
@@ -17,6 +18,7 @@ import { isUserAuthenticated, clearStoredAuth } from "@/lib/auth";
 type AppView = "home" | "login" | "register" | DashboardView;
 
 function App() {
+    const [selectedLikedHomeId, setSelectedLikedHomeId] = useState<number | null>(null);
     const [currentView, setCurrentView] = useState<AppView>(() => {
         if (!isUserAuthenticated()) {
             return "home";
@@ -58,6 +60,7 @@ function App() {
             return;
         }
 
+        setSelectedLikedHomeId(null);
         setCurrentView(view);
     };
 
@@ -146,9 +149,18 @@ function App() {
                         onExplore={() => navigateToProtectedPage("explore")}
                     />
                 ) : currentView === "liked-homes" ? (
-                    <LikedHomesPage
-                        onExplore={() => navigateToProtectedPage("explore")}
-                    />
+                    selectedLikedHomeId !== null ? (
+                        <HomeDetailsPage
+                            homeId={selectedLikedHomeId}
+                            isOwner={false}
+                            onBack={() => setSelectedLikedHomeId(null)}
+                        />
+                    ) : (
+                        <LikedHomesPage
+                            onExplore={() => navigateToProtectedPage("explore")}
+                            onViewHome={setSelectedLikedHomeId}
+                        />
+                    )
                 ) : (
                     <main className="px-6 py-20 md:p-8">
                         <h1 className="text-3xl font-bold">
