@@ -20,6 +20,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { homeImageUrl } from "@/features/home/homeLikesApi";
 import { cn } from "@/lib/utils";
 import {
+    acceptSwapRequest,
+    rejectSwapRequest,
     getReceivedSwapRequests,
     getSentSwapRequests,
     getSwapRequest,
@@ -54,7 +56,6 @@ function formatPeriod(request: SwapRequest): string {
     return `${format(parseISO(request.startDate), "MMM d")} – ${format(parseISO(request.endDate), "MMM d, yyyy")}`;
 }
 
-/** From the viewer's point of view: the home they give, and the home they stay at. */
 function homesFor(request: SwapRequest, direction: Direction) {
     return direction === "sent"
         ? { mine: request.requesterHome, theirs: request.targetHome }
@@ -77,10 +78,10 @@ function HomeThumb({ home, className }: { home?: SwapHome; className?: string })
 }
 
 function RequestCard({
-    request,
-    direction,
-    onOpen,
-}: {
+                         request,
+                         direction,
+                         onOpen,
+                     }: {
     request: SwapRequest;
     direction: Direction;
     onOpen: () => void;
@@ -121,11 +122,11 @@ function RequestCard({
 }
 
 function RequestList({
-    direction,
-    requests,
-    onOpen,
-    onExplore,
-}: {
+                         direction,
+                         requests,
+                         onOpen,
+                         onExplore,
+                     }: {
     direction: Direction;
     requests: SwapRequest[];
     onOpen: (id: number) => void;
@@ -191,16 +192,40 @@ function HomeDetailCard({ label, home }: { label: string; home?: SwapHome }) {
 }
 
 function RequestDetails({
-    requestId,
-    direction,
-    onBack,
-}: {
+                            requestId,
+                            direction,
+                            onBack,
+                            onAnswered,
+                        }: {
     requestId: number;
     direction: Direction;
     onBack: () => void;
+    onAnswered: () => void;
 }) {
     const [request, setRequest] = useState<SwapRequest | null>(null);
     const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+    const [success, setSuccess] = useState("");
+    const [actionError, setActionError] = useState("");
+
+    const respond = async (action: "accept" | "reject") => {
+        if (!request || request.status !== "PENDING" || submitting) return;
+        setSubmitting(true);
+        setActionError("");
+        setSuccess("");
+        try {
+            const updated = action === "accept"
+                ? await acceptSwapRequest(request.id)
+                : await rejectSwapRequest(request.id);
+            setRequest(updated);
+            setSuccess(action === "accept" ? "Swap confirmed successfully." : "Swap request rejected.");
+            onAnswered();
+        } catch (err) {
+            setActionError(err instanceof Error ? err.message : "Could not process swap request");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const controller = new AbortController();
@@ -264,6 +289,27 @@ function RequestDetails({
                                 : "This request is waiting for your answer."}
                         </p>
                     )}
+                    {direction === "received" && request.status === "PENDING" && (
+                        <div className="flex flex-wrap gap-3">
+                            <Button onClick={() => void respond("accept")} disabled={submitting}>
+                                {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+                                Accept
+                            </Button>
+                            <Button variant="destructive" onClick={() => void respond("reject")} disabled={submitting}>
+                                Reject
+                            </Button>
+                        </div>
+                    )}
+                    {actionError && (
+                        <p role="alert" className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+                            {actionError}
+                        </p>
+                    )}
+                    {success && (
+                        <p role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-700">
+                            {success}
+                        </p>
+                    )}
                 </>
             )}
         </main>
@@ -298,7 +344,14 @@ export default function SwapRequestsPage({ onExplore }: SwapRequestsPageProps) {
     }, [reloadKey]);
 
     if (openRequestId != null) {
-        return <RequestDetails requestId={openRequestId} direction={tab} onBack={() => setOpenRequestId(null)} />;
+        return (
+            <RequestDetails
+                requestId={openRequestId}
+                direction={tab}
+                onBack={() => setOpenRequestId(null)}
+                onAnswered={() => setReloadKey((value) => value + 1)}
+            />
+        );
     }
 
     return (

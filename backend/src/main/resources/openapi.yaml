@@ -811,6 +811,68 @@ paths:
               schema:
                 $ref: './models.yaml#/components/schemas/ErrorResponse'
 
+  /api/v1/swap-requests/{swapRequestId}/accept:
+    post:
+      tags:
+        - SwapRequests
+      operationId: acceptSwapRequest
+      summary: Accept a pending swap request and reserve both homes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: swapRequestId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Swap request accepted
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/SwapRequestResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only the recipient may respond
+        '404':
+          description: Swap request not found
+        '409':
+          description: Request is no longer pending, dates are unavailable, or a home is already reserved
+
+  /api/v1/swap-requests/{swapRequestId}/reject:
+    post:
+      tags:
+        - SwapRequests
+      operationId: rejectSwapRequest
+      summary: Reject a pending swap request
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: swapRequestId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Swap request rejected
+          content:
+            application/json:
+              schema:
+                $ref: './models.yaml#/components/schemas/SwapRequestResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Only the recipient may respond
+        '404':
+          description: Swap request not found
+        '409':
+          description: Only pending swap requests can be rejected
+
 components:
   securitySchemes:
     bearerAuth:

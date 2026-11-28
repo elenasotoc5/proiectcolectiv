@@ -13,31 +13,41 @@ import ubb.inothershoes.service.SwapRequestService;
 @RestController
 public class SwapRequestController implements SwapRequestsApi {
 
-  private final SwapRequestService swapRequestService;
+    private final SwapRequestService swapRequestService;
 
-  public SwapRequestController(SwapRequestService swapRequestService) {
-    this.swapRequestService = swapRequestService;
-  }
+    public SwapRequestController(SwapRequestService swapRequestService) {
+        this.swapRequestService = swapRequestService;
+    }
 
-  @Override
-  public ResponseEntity<SwapRequestResponse> createSwapRequest(
-      @Valid CreateSwapRequestRequest createSwapRequestRequest) {
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(swapRequestService.createSwapRequest(createSwapRequestRequest));
-  }
+    @Override
+    public ResponseEntity<SwapRequestResponse> createSwapRequest(
+            @Valid CreateSwapRequestRequest createSwapRequestRequest) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(swapRequestService.createSwapRequest(createSwapRequestRequest));
+    }
 
-  @Override
-  public ResponseEntity<List<SwapRequestResponse>> getSentSwapRequests() {
-    return ResponseEntity.ok(swapRequestService.getSentSwapRequests());
-  }
+    @Override
+    public ResponseEntity<List<SwapRequestResponse>> getSentSwapRequests() {
+        return ResponseEntity.ok(swapRequestService.getSentSwapRequests());
+    }
 
-  @Override
-  public ResponseEntity<List<SwapRequestResponse>> getReceivedSwapRequests() {
-    return ResponseEntity.ok(swapRequestService.getReceivedSwapRequests());
-  }
+    @Override
+    public ResponseEntity<List<SwapRequestResponse>> getReceivedSwapRequests() {
+        return ResponseEntity.ok(swapRequestService.getReceivedSwapRequests());
+    }
 
-  @Override
-  public ResponseEntity<SwapRequestResponse> getSwapRequestById(Long swapRequestId) {
-    return ResponseEntity.ok(swapRequestService.getSwapRequestById(swapRequestId));
-  }
+    @Override
+    public ResponseEntity<SwapRequestResponse> acceptSwapRequest(Long swapRequestId) {
+        return ResponseEntity.ok(swapRequestService.acceptSwapRequest(swapRequestId));
+    }
+
+    @Override
+    public ResponseEntity<SwapRequestResponse> rejectSwapRequest(Long swapRequestId) {
+        return ResponseEntity.ok(swapRequestService.rejectSwapRequest(swapRequestId));
+    }
+
+    @Override
+    public ResponseEntity<SwapRequestResponse> getSwapRequestById(Long swapRequestId) {
+        return ResponseEntity.ok(swapRequestService.getSwapRequestById(swapRequestId));
+    }
 }

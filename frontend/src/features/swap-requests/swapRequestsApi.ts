@@ -75,7 +75,6 @@ export async function createSwapRequest(body: {
     return (await response.json()) as SwapRequest;
 }
 
-/** Local-time YYYY-MM-DD, matching the backend LocalDate format. */
 export function toIsoDate(date: Date): string {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -83,7 +82,6 @@ export function toIsoDate(date: Date): string {
     return `${year}-${month}-${day}`;
 }
 
-/** Mirrors the backend rule: all seven days must fall inside one availability period. */
 export function coversSwap(periods: AvailabilityPeriod[], start: Date): boolean {
     const from = toIsoDate(start);
     const end = new Date(start);
@@ -109,5 +107,23 @@ export async function getReceivedSwapRequests(signal?: AbortSignal): Promise<Swa
 export async function getSwapRequest(id: number, signal?: AbortSignal): Promise<SwapRequest> {
     const response = await fetch(`${API_URL}/api/v1/swap-requests/${id}`, { headers: getAuthHeaders(), signal });
     await checkResponse(response, "Could not load swap request");
+    return (await response.json()) as SwapRequest;
+}
+
+export async function acceptSwapRequest(id: number): Promise<SwapRequest> {
+    const response = await fetch(`${API_URL}/api/v1/swap-requests/${id}/accept`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+    });
+    await checkResponse(response, "Could not accept swap request");
+    return (await response.json()) as SwapRequest;
+}
+
+export async function rejectSwapRequest(id: number): Promise<SwapRequest> {
+    const response = await fetch(`${API_URL}/api/v1/swap-requests/${id}/reject`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+    });
+    await checkResponse(response, "Could not reject swap request");
     return (await response.json()) as SwapRequest;
 }
